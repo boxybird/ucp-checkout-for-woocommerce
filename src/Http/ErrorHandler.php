@@ -67,7 +67,7 @@ class ErrorHandler
         // Always log the full error for debugging
         error_log(sprintf(
             'UCP Error: [%s] %s in %s:%d',
-            get_class($e),
+            $e::class,
             $e->getMessage(),
             $e->getFile(),
             $e->getLine()
@@ -157,9 +157,9 @@ class ErrorHandler
      */
     private static function exceptionToCode(Exception $e): string
     {
-        $className = (new \ReflectionClass($e))->getShortName();
+        $className = new \ReflectionClass($e)->getShortName();
         $code = preg_replace('/Exception$/', '', $className);
-        $code = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $code));
+        $code = strtolower((string) preg_replace('/([a-z])([A-Z])/', '$1_$2', (string) $code));
 
         return $code ?: 'unknown_error';
     }

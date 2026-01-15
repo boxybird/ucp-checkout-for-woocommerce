@@ -7,8 +7,8 @@ use UcpCheckout\Manifest\ManifestBuilder;
 
 class Plugin
 {
-    private Container $container;
-    private ManifestBuilder $manifestBuilder;
+    private readonly Container $container;
+    private readonly ManifestBuilder $manifestBuilder;
 
     public function __construct(?Container $container = null)
     {
@@ -22,14 +22,14 @@ class Plugin
     public function init(): void
     {
         // Handle manifest discovery
-        add_action('init', [$this, 'handleManifest'], 1);
+        add_action('init', $this->handleManifest(...), 1);
 
         // Register REST API endpoints
-        add_action('rest_api_init', [$this, 'registerEndpoints']);
+        add_action('rest_api_init', $this->registerEndpoints(...));
 
         // Register activation/deactivation hooks
-        register_activation_hook($this->getPluginFile(), [$this, 'activate']);
-        register_deactivation_hook($this->getPluginFile(), [$this, 'deactivate']);
+        register_activation_hook($this->getPluginFile(), $this->activate(...));
+        register_deactivation_hook($this->getPluginFile(), $this->deactivate(...));
     }
 
     /**

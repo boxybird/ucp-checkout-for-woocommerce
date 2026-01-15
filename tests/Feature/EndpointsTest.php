@@ -22,44 +22,44 @@ function fetchJson(string $url, string $method = 'GET', array $data = []): array
     return json_decode($response, true) ?? [];
 }
 
-describe('Manifest', function () {
-    it('returns valid UCP manifest', function () {
+describe('Manifest', function (): void {
+    it('returns valid UCP manifest', function (): void {
         $response = fetchJson(BASE_URL . '/.well-known/ucp');
         expect($response)->toMatchSnapshot();
     });
 });
 
-describe('Search Endpoint', function () {
-    it('searches for products', function () {
+describe('Search Endpoint', function (): void {
+    it('searches for products', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/search?q=shirt');
         expect($response)->toMatchSnapshot();
     });
 
-    it('returns validation error for missing query parameter', function () {
+    it('returns validation error for missing query parameter', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/search');
         expect($response)->toMatchSnapshot();
     });
 });
 
-describe('Availability Endpoint', function () {
-    it('returns product availability for valid SKU', function () {
+describe('Availability Endpoint', function (): void {
+    it('returns product availability for valid SKU', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/availability?sku=' . TEST_SKU);
         expect($response)->toMatchSnapshot();
     });
 
-    it('returns validation error for missing SKU parameter', function () {
+    it('returns validation error for missing SKU parameter', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/availability');
         expect($response)->toMatchSnapshot();
     });
 
-    it('returns 404 for non-existent SKU', function () {
+    it('returns 404 for non-existent SKU', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/availability?sku=INVALID-SKU-12345');
         expect($response)->toMatchSnapshot();
     });
 });
 
-describe('Estimate Endpoint', function () {
-    it('returns shipping estimate for valid SKU', function () {
+describe('Estimate Endpoint', function (): void {
+    it('returns shipping estimate for valid SKU', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/estimate', 'POST', [
             'sku' => TEST_SKU,
             'quantity' => 1,
@@ -70,7 +70,7 @@ describe('Estimate Endpoint', function () {
         expect($response)->toMatchSnapshot();
     });
 
-    it('returns validation error for missing SKU', function () {
+    it('returns validation error for missing SKU', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/estimate', 'POST', [
             'quantity' => 1,
         ]);
@@ -78,8 +78,8 @@ describe('Estimate Endpoint', function () {
     });
 });
 
-describe('Checkout Session Create', function () {
-    it('creates a checkout session', function () {
+describe('Checkout Session Create', function (): void {
+    it('creates a checkout session', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/checkout-sessions', 'POST', [
             'sku' => TEST_SKU,
             'quantity' => 1,
@@ -92,21 +92,21 @@ describe('Checkout Session Create', function () {
         expect($response['data']['status'])->toBe('pending');
     });
 
-    it('returns validation error when creating session without items', function () {
+    it('returns validation error when creating session without items', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/checkout-sessions', 'POST', []);
         expect($response)->toMatchSnapshot();
     });
 });
 
-describe('Checkout Session Get', function () {
-    it('returns 404 for non-existent session', function () {
+describe('Checkout Session Get', function (): void {
+    it('returns 404 for non-existent session', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/checkout-sessions/non-existent-session-id');
         expect($response)->toMatchSnapshot();
     });
 });
 
-describe('Checkout Session Complete', function () {
-    it('returns error for non-existent session', function () {
+describe('Checkout Session Complete', function (): void {
+    it('returns error for non-existent session', function (): void {
         $response = fetchJson(BASE_URL . '/wp-json/ucp/v1/checkout-sessions/fake-session/complete', 'POST', [
             'payment_token' => 'test_token_123',
             'shipping' => [

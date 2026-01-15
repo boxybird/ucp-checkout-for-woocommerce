@@ -9,14 +9,11 @@ use WP_REST_Response;
 
 class CheckoutSessionGetEndpoint extends AbstractEndpoint
 {
-    private CheckoutSessionRepository $repository;
-
     public function __construct(
         ?PluginConfig $config = null,
-        ?CheckoutSessionRepository $repository = null
+        private readonly ?CheckoutSessionRepository $repository = new CheckoutSessionRepository()
     ) {
         parent::__construct($config);
-        $this->repository = $repository ?? new CheckoutSessionRepository();
     }
 
     public function getRoute(): string

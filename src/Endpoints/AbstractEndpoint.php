@@ -42,8 +42,8 @@ abstract class AbstractEndpoint
             $this->getRoute(),
             [
                 'methods' => $this->getMethods(),
-                'callback' => [$this, 'handle'],
-                'permission_callback' => [$this, 'permissionCallback'],
+                'callback' => $this->handle(...),
+                'permission_callback' => $this->permissionCallback(...),
             ]
         );
     }
@@ -118,9 +118,9 @@ abstract class AbstractEndpoint
         $errors = [];
 
         foreach ($required as $field) {
-            if (str_contains($field, '.')) {
+            if (str_contains((string) $field, '.')) {
                 // Handle nested fields like "shipping.first_name"
-                $parts = explode('.', $field);
+                $parts = explode('.', (string) $field);
                 $value = $data;
                 foreach ($parts as $part) {
                     $value = $value[$part] ?? null;

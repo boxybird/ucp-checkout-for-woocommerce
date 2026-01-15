@@ -4,8 +4,8 @@ namespace UcpCheckout\Checkout;
 
 class CheckoutSessionRepository
 {
-    private const TRANSIENT_PREFIX = 'ucp_checkout_session_';
-    private const SESSION_TTL = 1800; // 30 minutes in seconds
+    private const string TRANSIENT_PREFIX = 'ucp_checkout_session_';
+    private const int SESSION_TTL = 1800; // 30 minutes in seconds
 
     /**
      * Save a checkout session.

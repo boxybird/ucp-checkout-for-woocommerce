@@ -56,51 +56,33 @@ class Container
         $container = new self();
 
         // Core services
-        $container->register(PluginConfig::class, function () {
-            return PluginConfig::getInstance();
-        });
+        $container->register(PluginConfig::class, fn() => PluginConfig::getInstance());
 
-        $container->register(ManifestBuilder::class, function (Container $c) {
-            return new ManifestBuilder($c->get(PluginConfig::class));
-        });
+        $container->register(ManifestBuilder::class, fn(Container $c) => new ManifestBuilder($c->get(PluginConfig::class)));
 
-        $container->register(CheckoutSessionRepository::class, function () {
-            return new CheckoutSessionRepository();
-        });
+        $container->register(CheckoutSessionRepository::class, fn() => new CheckoutSessionRepository());
 
         // Endpoints
-        $container->register(SearchEndpoint::class, function (Container $c) {
-            return new SearchEndpoint($c->get(PluginConfig::class));
-        });
+        $container->register(SearchEndpoint::class, fn(Container $c) => new SearchEndpoint($c->get(PluginConfig::class)));
 
-        $container->register(AvailabilityEndpoint::class, function (Container $c) {
-            return new AvailabilityEndpoint($c->get(PluginConfig::class));
-        });
+        $container->register(AvailabilityEndpoint::class, fn(Container $c) => new AvailabilityEndpoint($c->get(PluginConfig::class)));
 
-        $container->register(EstimateEndpoint::class, function (Container $c) {
-            return new EstimateEndpoint($c->get(PluginConfig::class));
-        });
+        $container->register(EstimateEndpoint::class, fn(Container $c) => new EstimateEndpoint($c->get(PluginConfig::class)));
 
-        $container->register(CheckoutSessionCreateEndpoint::class, function (Container $c) {
-            return new CheckoutSessionCreateEndpoint(
-                $c->get(PluginConfig::class),
-                $c->get(CheckoutSessionRepository::class)
-            );
-        });
+        $container->register(CheckoutSessionCreateEndpoint::class, fn(Container $c) => new CheckoutSessionCreateEndpoint(
+            $c->get(PluginConfig::class),
+            $c->get(CheckoutSessionRepository::class)
+        ));
 
-        $container->register(CheckoutSessionGetEndpoint::class, function (Container $c) {
-            return new CheckoutSessionGetEndpoint(
-                $c->get(PluginConfig::class),
-                $c->get(CheckoutSessionRepository::class)
-            );
-        });
+        $container->register(CheckoutSessionGetEndpoint::class, fn(Container $c) => new CheckoutSessionGetEndpoint(
+            $c->get(PluginConfig::class),
+            $c->get(CheckoutSessionRepository::class)
+        ));
 
-        $container->register(CheckoutSessionCompleteEndpoint::class, function (Container $c) {
-            return new CheckoutSessionCompleteEndpoint(
-                $c->get(PluginConfig::class),
-                $c->get(CheckoutSessionRepository::class)
-            );
-        });
+        $container->register(CheckoutSessionCompleteEndpoint::class, fn(Container $c) => new CheckoutSessionCompleteEndpoint(
+            $c->get(PluginConfig::class),
+            $c->get(CheckoutSessionRepository::class)
+        ));
 
         return $container;
     }

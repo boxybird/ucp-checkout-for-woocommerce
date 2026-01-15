@@ -15,10 +15,10 @@ class CheckoutSession
     private string $id;
     private string $status;
     private array $items;
-    private ?array $shippingAddress;
-    private ?string $selectedShippingMethod;
-    private ?array $paymentInfo;
-    private ?int $orderId;
+    private ?array $shippingAddress = null;
+    private ?string $selectedShippingMethod = null;
+    private ?array $paymentInfo = null;
+    private ?int $orderId = null;
     private DateTimeImmutable $createdAt;
     private DateTimeImmutable $expiresAt;
 

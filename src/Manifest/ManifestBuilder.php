@@ -6,7 +6,7 @@ use UcpCheckout\Config\PluginConfig;
 
 class ManifestBuilder
 {
-    private PluginConfig $config;
+    private readonly PluginConfig $config;
 
     public function __construct(?PluginConfig $config = null)
     {
@@ -76,6 +76,6 @@ class ManifestBuilder
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 
         // Exact match for /.well-known/ucp (with optional trailing slash or query string)
-        return (bool) preg_match('#^/\.well-known/ucp/?(\?.*)?$#', $requestUri);
+        return (bool) preg_match('#^/\.well-known/ucp/?(\?.*)?$#', (string) $requestUri);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name: AI Checkout for WooCommerce
+ * Plugin Name: UCP Checkout for WooCommerce
  * Description: Enable AI agents like ChatGPT, Gemini, and Claude to discover and purchase products from your WooCommerce store using the Universal Commerce Protocol (UCP).
  * Version: 1.0
  * Author: Your Name

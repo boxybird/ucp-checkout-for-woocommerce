@@ -67,7 +67,7 @@ class Plugin
         if (!class_exists('WooCommerce')) {
             deactivate_plugins(plugin_basename($this->getPluginFile()));
             wp_die(
-                'WooCommerce UCP Bridge requires WooCommerce to be installed and active.',
+                'UCP Checkout for WooCommerce requires WooCommerce to be installed and active.',
                 'Plugin Activation Error',
                 ['back_link' => true]
             );
@@ -103,7 +103,7 @@ class Plugin
      */
     private function getPluginFile(): string
     {
-        return dirname(__DIR__) . '/ai-checkout.php';
+        return dirname(__DIR__) . '/ucp-checkout.php';
     }
 
     /**

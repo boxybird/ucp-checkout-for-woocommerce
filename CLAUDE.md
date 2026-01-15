@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**AI Checkout for WooCommerce** is a WordPress plugin implementing the Universal Commerce Protocol (UCP), enabling AI agents (ChatGPT, Gemini, Claude) to discover, search, and purchase products from WooCommerce stores.
+**UCP Checkout for WooCommerce** is a WordPress plugin implementing the Universal Commerce Protocol (UCP), enabling AI agents (ChatGPT, Gemini, Claude) to discover, search, and purchase products from WooCommerce stores.
 
 ## Architecture
 
 ### Directory Structure
 ```
 ├── composer.json              # PSR-4 autoloading
-├── ai-checkout.php            # WordPress plugin bootstrap
+├── ucp-checkout.php           # WordPress plugin bootstrap
 └── src/
     ├── Plugin.php             # Main plugin class (entry point)
     ├── Container.php          # Dependency injection container

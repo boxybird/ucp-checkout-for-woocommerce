@@ -8,10 +8,25 @@
             "UcpPlugin\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.4"
+    },
+    "require-dev": {
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-browser": "^4.0"
+    },
+    "scripts": {
+        "test": "./vendor/bin/pest"
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     }
 }

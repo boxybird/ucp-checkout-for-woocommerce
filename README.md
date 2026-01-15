@@ -8,6 +8,18 @@
   Enable AI agents like ChatGPT, Gemini, and Claude to purchase products from your WooCommerce store using the <a href="https://ucp.dev">Universal Commerce Protocol (UCP)</a>.
 </p>
 
+<p align="center">
+  <img src="assets/identity.png" alt="Account linking" width="250">
+  &nbsp;&nbsp;
+  <img src="assets/checkout.png" alt="Order review" width="250">
+  &nbsp;&nbsp;
+  <img src="assets/order.png" alt="Order complete" width="250">
+</p>
+
+<p align="center">
+  <em>Seamless AI-powered checkout: Account linking → Order review → Confirmation</em>
+</p>
+
 ## What is UCP?
 
 The Universal Commerce Protocol (UCP) is an open standard developed by Google and industry partners that allows AI agents to interact with e-commerce stores programmatically. It provides a standardized way for AI assistants to:

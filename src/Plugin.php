@@ -8,13 +8,11 @@ use UcpPlugin\Manifest\ManifestBuilder;
 class Plugin
 {
     private Container $container;
-    private PluginConfig $config;
     private ManifestBuilder $manifestBuilder;
 
     public function __construct(?Container $container = null)
     {
         $this->container = $container ?? Container::bootstrap();
-        $this->config = $this->container->get(PluginConfig::class);
         $this->manifestBuilder = $this->container->get(ManifestBuilder::class);
     }
 

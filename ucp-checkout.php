@@ -5,7 +5,7 @@
  * Description: Enable AI agents like ChatGPT, Gemini, and Claude to discover and purchase products from your WooCommerce store using the Universal Commerce Protocol (UCP).
  * Version: 1.0
  * Author: Andrew Rhyand
- * Requires PHP: 8.0
+ * Requires PHP: 8.4
  * Requires at least: 6.0
  * WC requires at least: 8.0
  */

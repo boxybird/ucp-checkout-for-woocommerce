@@ -49,6 +49,7 @@ class ErrorHandler
 
     /**
      * Create error response from an exception.
+     * In production, sensitive details are hidden from the response but logged for debugging.
      */
     public static function fromException(Exception $e, string $status = self::STATUS_ERROR): WP_REST_Response
     {
@@ -58,10 +59,24 @@ class ErrorHandler
             $httpStatus = $e->getCode();
         }
 
+        // In production, hide detailed exception messages that could leak sensitive info
+        $message = (defined('WP_DEBUG') && WP_DEBUG)
+            ? $e->getMessage()
+            : 'An error occurred while processing your request.';
+
+        // Always log the full error for debugging
+        error_log(sprintf(
+            'UCP Error: [%s] %s in %s:%d',
+            get_class($e),
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine()
+        ));
+
         return self::createError(
             $status,
             self::exceptionToCode($e),
-            $e->getMessage(),
+            $message,
             self::SEVERITY_ERROR,
             $httpStatus
         );

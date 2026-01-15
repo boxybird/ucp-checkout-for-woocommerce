@@ -1,9 +1,9 @@
 <?php
 
-namespace UcpPlugin\Endpoints;
+namespace UcpCheckout\Endpoints;
 
-use UcpPlugin\Checkout\CheckoutSessionRepository;
-use UcpPlugin\Config\PluginConfig;
+use UcpCheckout\Checkout\CheckoutSessionRepository;
+use UcpCheckout\Config\PluginConfig;
 use WP_REST_Request;
 use WP_REST_Response;
 

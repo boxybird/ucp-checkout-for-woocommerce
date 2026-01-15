@@ -1,16 +1,16 @@
 <?php
 
-namespace UcpPlugin;
+namespace UcpCheckout;
 
-use UcpPlugin\Checkout\CheckoutSessionRepository;
-use UcpPlugin\Config\PluginConfig;
-use UcpPlugin\Endpoints\AvailabilityEndpoint;
-use UcpPlugin\Endpoints\CheckoutSessionCompleteEndpoint;
-use UcpPlugin\Endpoints\CheckoutSessionCreateEndpoint;
-use UcpPlugin\Endpoints\CheckoutSessionGetEndpoint;
-use UcpPlugin\Endpoints\EstimateEndpoint;
-use UcpPlugin\Endpoints\SearchEndpoint;
-use UcpPlugin\Manifest\ManifestBuilder;
+use UcpCheckout\Checkout\CheckoutSessionRepository;
+use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\Endpoints\AvailabilityEndpoint;
+use UcpCheckout\Endpoints\CheckoutSessionCompleteEndpoint;
+use UcpCheckout\Endpoints\CheckoutSessionCreateEndpoint;
+use UcpCheckout\Endpoints\CheckoutSessionGetEndpoint;
+use UcpCheckout\Endpoints\EstimateEndpoint;
+use UcpCheckout\Endpoints\SearchEndpoint;
+use UcpCheckout\Manifest\ManifestBuilder;
 
 class Container
 {

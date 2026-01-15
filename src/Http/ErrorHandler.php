@@ -1,6 +1,6 @@
 <?php
 
-namespace UcpPlugin\Http;
+namespace UcpCheckout\Http;
 
 use WP_REST_Response;
 use Exception;

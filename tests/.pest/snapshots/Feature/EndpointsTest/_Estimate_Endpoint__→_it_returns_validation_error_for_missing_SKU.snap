@@ -1,0 +1,11 @@
+{
+    "status": "validation_error",
+    "messages": [
+        {
+            "type": "error",
+            "code": "invalid_sku",
+            "message": "Sku is required",
+            "severity": "error"
+        }
+    ]
+}

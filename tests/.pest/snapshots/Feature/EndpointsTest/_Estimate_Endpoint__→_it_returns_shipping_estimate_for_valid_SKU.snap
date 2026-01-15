@@ -1,0 +1,14 @@
+{
+    "code": "internal_server_error",
+    "message": "<p>There has been a critical error on this website.<\/p><p><a href=\"https:\/\/wordpress.org\/documentation\/article\/faq-troubleshooting\/\">Learn more about troubleshooting WordPress.<\/a><\/p>",
+    "data": {
+        "status": 500,
+        "error": {
+            "type": 1,
+            "message": "Uncaught Error: Call to a member function set_billing_location() on null in \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-content\/plugins\/ucp-checkout-for-woocommerce\/src\/Endpoints\/EstimateEndpoint.php:48\nStack trace:\n#0 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/rest-api\/class-wp-rest-server.php(1292): UcpCheckout\\Endpoints\\EstimateEndpoint->handle(Object(WP_REST_Request))\n#1 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/rest-api\/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '\/ucp\/v1\/estimat...', Array, NULL)\n#2 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/rest-api\/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))\n#3 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/rest-api.php(467): WP_REST_Server->serve_request('\/ucp\/v1\/estimat...')\n#4 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/class-wp-hook.php(341): rest_api_loaded(Object(WP))\n#5 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/class-wp-hook.php(365): WP_Hook->apply_filters(NULL, Array)\n#6 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/plugin.php(570): WP_Hook->do_action(Array)\n#7 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/class-wp.php(418): do_action_ref_array('parse_request', Array)\n#8 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/class-wp.php(821): WP->parse_request('')\n#9 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-includes\/functions.php(1343): WP->main('')\n#10 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-blog-header.php(16): wp()\n#11 \/Users\/andrewrhyand\/Projects\/ucp-plugin\/index.php(17): require('\/Users\/andrewrh...')\n#12 \/Applications\/Herd.app\/Contents\/Resources\/valet\/server.php(167): require('\/Users\/andrewrh...')\n#13 {main}\n  thrown",
+            "file": "\/Users\/andrewrhyand\/Projects\/ucp-plugin\/wp-content\/plugins\/ucp-checkout-for-woocommerce\/src\/Endpoints\/EstimateEndpoint.php",
+            "line": 48
+        }
+    },
+    "additional_errors": []
+}

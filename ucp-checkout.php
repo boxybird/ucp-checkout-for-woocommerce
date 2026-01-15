@@ -25,7 +25,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 // Initialize the plugin
 function ucp_plugin_init(): void
 {
-    $plugin = new UcpPlugin\Plugin();
+    $plugin = new UcpCheckout\Plugin();
     $plugin->init();
 }
 

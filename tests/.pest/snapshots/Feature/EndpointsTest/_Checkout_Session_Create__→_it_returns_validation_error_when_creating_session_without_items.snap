@@ -1,0 +1,11 @@
+{
+    "status": "validation_error",
+    "messages": [
+        {
+            "type": "error",
+            "code": "invalid_items",
+            "message": "At least one item is required (provide items array or sku)",
+            "severity": "error"
+        }
+    ]
+}

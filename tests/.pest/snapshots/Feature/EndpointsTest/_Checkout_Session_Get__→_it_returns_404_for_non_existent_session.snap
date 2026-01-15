@@ -1,0 +1,11 @@
+{
+    "status": "not_found",
+    "messages": [
+        {
+            "type": "error",
+            "code": "checkout_session_not_found",
+            "message": "Checkout_session not found: non-existent-session-id",
+            "severity": "error"
+        }
+    ]
+}

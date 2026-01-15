@@ -1,0 +1,56 @@
+{
+    "ucp": {
+        "version": "2026-01-01",
+        "capabilities": [
+            {
+                "name": "dev.ucp.product-search",
+                "version": "2026-01-01"
+            },
+            {
+                "name": "dev.ucp.availability",
+                "version": "2026-01-01"
+            },
+            {
+                "name": "dev.ucp.shipping-estimate",
+                "version": "2026-01-01"
+            },
+            {
+                "name": "dev.ucp.checkout",
+                "version": "2026-01-01"
+            }
+        ]
+    },
+    "data": {
+        "query": "shirt",
+        "count": 3,
+        "results": [
+            {
+                "name": "T-Shirt",
+                "sku": "woo-tshirt",
+                "price": "18",
+                "currency": "USD",
+                "in_stock": true,
+                "image": "https:\/\/ucp-plugin.test\/wp-content\/uploads\/2026\/01\/tshirt-2.jpg",
+                "url": "https:\/\/ucp-plugin.test\/product\/t-shirt\/"
+            },
+            {
+                "name": "T-Shirt with Logo",
+                "sku": "Woo-tshirt-logo",
+                "price": "18",
+                "currency": "USD",
+                "in_stock": true,
+                "image": "https:\/\/ucp-plugin.test\/wp-content\/uploads\/2026\/01\/t-shirt-with-logo-1.jpg",
+                "url": "https:\/\/ucp-plugin.test\/product\/t-shirt-with-logo\/"
+            },
+            {
+                "name": "V-Neck T-Shirt",
+                "sku": "woo-vneck-tee",
+                "price": "15",
+                "currency": "USD",
+                "in_stock": true,
+                "image": "https:\/\/ucp-plugin.test\/wp-content\/uploads\/2026\/01\/vneck-tee-2.jpg",
+                "url": "https:\/\/ucp-plugin.test\/product\/v-neck-t-shirt\/"
+            }
+        ]
+    }
+}

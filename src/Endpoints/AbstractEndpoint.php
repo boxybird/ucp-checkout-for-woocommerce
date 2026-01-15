@@ -1,10 +1,10 @@
 <?php
 
-namespace UcpPlugin\Endpoints;
+namespace UcpCheckout\Endpoints;
 
-use UcpPlugin\Config\PluginConfig;
-use UcpPlugin\Http\ErrorHandler;
-use UcpPlugin\Http\UcpResponse;
+use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\Http\ErrorHandler;
+use UcpCheckout\Http\UcpResponse;
 use WP_REST_Request;
 use WP_REST_Response;
 

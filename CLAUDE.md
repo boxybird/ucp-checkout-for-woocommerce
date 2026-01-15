@@ -36,8 +36,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 
 ### Namespace
-- Root: `UcpPlugin`
-- PSR-4 autoloading maps `UcpPlugin\` to `src/`
+- Root: `UcpCheckout`
+- PSR-4 autoloading maps `UcpCheckout\` to `src/`
 
 ### Key Components
 

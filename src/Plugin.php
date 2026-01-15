@@ -1,9 +1,9 @@
 <?php
 
-namespace UcpPlugin;
+namespace UcpCheckout;
 
-use UcpPlugin\Config\PluginConfig;
-use UcpPlugin\Manifest\ManifestBuilder;
+use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\Manifest\ManifestBuilder;
 
 class Plugin
 {
@@ -90,7 +90,7 @@ class Plugin
     public function deactivate(): void
     {
         // Clean up expired checkout sessions
-        $repository = $this->container->get(\UcpPlugin\Checkout\CheckoutSessionRepository::class);
+        $repository = $this->container->get(\UcpCheckout\Checkout\CheckoutSessionRepository::class);
         $repository->cleanupExpired();
 
         flush_rewrite_rules();

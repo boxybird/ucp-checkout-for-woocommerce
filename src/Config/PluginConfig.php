@@ -1,6 +1,6 @@
 <?php
 
-namespace UcpPlugin\Config;
+namespace UcpCheckout\Config;
 
 class PluginConfig
 {

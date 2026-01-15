@@ -1,6 +1,6 @@
 <?php
 
-namespace UcpPlugin\Checkout;
+namespace UcpCheckout\Checkout;
 
 class CheckoutSessionRepository
 {

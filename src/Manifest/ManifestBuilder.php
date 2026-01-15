@@ -1,8 +1,8 @@
 <?php
 
-namespace UcpPlugin\Manifest;
+namespace UcpCheckout\Manifest;
 
-use UcpPlugin\Config\PluginConfig;
+use UcpCheckout\Config\PluginConfig;
 
 class ManifestBuilder
 {

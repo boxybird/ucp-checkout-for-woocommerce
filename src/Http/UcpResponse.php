@@ -1,8 +1,8 @@
 <?php
 
-namespace UcpPlugin\Http;
+namespace UcpCheckout\Http;
 
-use UcpPlugin\Config\PluginConfig;
+use UcpCheckout\Config\PluginConfig;
 use WP_REST_Response;
 
 class UcpResponse

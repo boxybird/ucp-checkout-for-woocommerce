@@ -1,0 +1,11 @@
+{
+    "status": "validation_error",
+    "messages": [
+        {
+            "type": "error",
+            "code": "invalid_q",
+            "message": "Search query is required",
+            "severity": "error"
+        }
+    ]
+}

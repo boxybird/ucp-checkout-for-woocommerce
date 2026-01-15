@@ -198,7 +198,7 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
 
         // Add metadata
         $order->add_meta_data('_ucp_session_id', $session->getId());
-        $order->add_meta_data('_ucp_agent_checkout', true);
+        $order->add_meta_data('_ucp_agent_checkout', '1');
 
         // Calculate totals and complete payment
         $order->calculate_totals();

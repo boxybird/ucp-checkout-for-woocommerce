@@ -55,7 +55,7 @@ class ErrorHandler
     {
         $httpStatus = 500;
 
-        if (method_exists($e, 'getCode') && $e->getCode() >= 400 && $e->getCode() < 600) {
+        if ($e->getCode() >= 400 && $e->getCode() < 600) {
             $httpStatus = $e->getCode();
         }
 

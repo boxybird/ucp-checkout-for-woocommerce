@@ -1,0 +1,8 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    scanDirectories:
+        - vendor/php-stubs/wordpress-stubs
+        - vendor/php-stubs/woocommerce-stubs

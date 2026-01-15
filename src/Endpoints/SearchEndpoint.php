@@ -59,7 +59,7 @@ class SearchEndpoint extends AbstractEndpoint
             'price' => $product->get_price(),
             'currency' => get_woocommerce_currency(),
             'in_stock' => $product->is_in_stock(),
-            'image' => wp_get_attachment_image_url($product->get_image_id(), 'full'),
+            'image' => wp_get_attachment_image_url((int) $product->get_image_id(), 'full'),
             'url' => $product->get_permalink(),
         ];
     }

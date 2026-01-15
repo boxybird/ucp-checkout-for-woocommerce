@@ -92,11 +92,11 @@ class EstimateEndpoint extends AbstractEndpoint
                     $productId => [
                         'data' => $product,
                         'quantity' => $quantity,
-                        'line_total' => $product->get_price() * $quantity,
+                        'line_total' => (float) $product->get_price() * $quantity,
                         'line_tax' => 0,
                     ],
                 ],
-                'contents_cost' => $product->get_price() * $quantity,
+                'contents_cost' => (float) $product->get_price() * $quantity,
                 'destination' => [
                     'country' => $country,
                     'state' => $state,
@@ -108,7 +108,9 @@ class EstimateEndpoint extends AbstractEndpoint
             ],
         ];
 
-        $shippingMethods = WC()->shipping->calculate_shipping($package);
+        /** @var \WC_Shipping $shipping */
+        $shipping = WC()->shipping; // @phpstan-ignore property.notFound
+        $shippingMethods = $shipping->calculate_shipping($package);
 
         $options = [];
         if (!empty($shippingMethods[0]['rates'])) {

@@ -1,0 +1,12 @@
+# Distribution excludes
+/.claude/           export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/CLAUDE.md          export-ignore
+/composer.json      export-ignore
+/composer.lock      export-ignore
+/phpstan.neon       export-ignore
+/phpunit.xml        export-ignore
+/rector.php         export-ignore
+/tests/             export-ignore
+.DS_Store           export-ignore

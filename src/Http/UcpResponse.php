@@ -9,8 +9,9 @@ class UcpResponse
 {
     /**
      * Create a successful UCP-compliant response.
+     * Per UCP spec, data fields are at root level alongside the `ucp` envelope.
      *
-     * @param array $data The response data
+     * @param array $data The response data (merged at root level)
      * @param array $activeCapabilities Optional override for capabilities
      * @param int $statusCode HTTP status code
      */
@@ -28,22 +29,8 @@ class UcpResponse
     }
 
     /**
-     * Create an array response (for search results, etc.) with UCP envelope.
-     *
-     * @param array $items The array of items
-     * @param string $key The key to use for the items in the response
-     * @param array $activeCapabilities Optional override for capabilities
-     */
-    public static function collection(
-        array $items,
-        string $key = 'results',
-        array $activeCapabilities = []
-    ): WP_REST_Response {
-        return self::success([$key => $items], $activeCapabilities);
-    }
-
-    /**
      * Wrap data with the required UCP envelope.
+     * Per UCP spec, data fields are at root level alongside the `ucp` field.
      *
      * @param array $data The response data
      * @param array $activeCapabilities Override capabilities if provided
@@ -54,13 +41,15 @@ class UcpResponse
             ? $activeCapabilities
             : self::getDefaultCapabilities();
 
-        return [
-            'ucp' => [
-                'version' => PluginConfig::UCP_VERSION,
-                'capabilities' => $capabilities,
+        return array_merge(
+            [
+                'ucp' => [
+                    'version' => PluginConfig::UCP_VERSION,
+                    'capabilities' => $capabilities,
+                ],
             ],
-            'data' => $data,
-        ];
+            $data
+        );
     }
 
     /**
@@ -70,19 +59,7 @@ class UcpResponse
     {
         return [
             [
-                'name' => 'dev.ucp.product-search',
-                'version' => PluginConfig::UCP_VERSION,
-            ],
-            [
-                'name' => 'dev.ucp.availability',
-                'version' => PluginConfig::UCP_VERSION,
-            ],
-            [
-                'name' => 'dev.ucp.shipping-estimate',
-                'version' => PluginConfig::UCP_VERSION,
-            ],
-            [
-                'name' => 'dev.ucp.checkout',
+                'name' => 'dev.ucp.shopping.checkout',
                 'version' => PluginConfig::UCP_VERSION,
             ],
         ];

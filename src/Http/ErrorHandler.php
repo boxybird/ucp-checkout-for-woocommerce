@@ -7,9 +7,13 @@ use Exception;
 
 class ErrorHandler
 {
-    public const SEVERITY_ERROR = 'error';
-    public const SEVERITY_WARNING = 'warning';
-    public const SEVERITY_INFO = 'info';
+    // UCP spec severity values
+    public const SEVERITY_RECOVERABLE = 'recoverable';
+    public const SEVERITY_REQUIRES_BUYER_INPUT = 'requires_buyer_input';
+    public const SEVERITY_REQUIRES_BUYER_REVIEW = 'requires_buyer_review';
+
+    // Legacy alias for backwards compatibility during refactor
+    public const SEVERITY_ERROR = 'recoverable';
 
     public const STATUS_ERROR = 'error';
     public const STATUS_VALIDATION_ERROR = 'validation_error';
@@ -24,14 +28,14 @@ class ErrorHandler
      * @param string $status Error status type
      * @param string $code Error code
      * @param string $message Human-readable message
-     * @param string $severity Error severity
+     * @param string $severity Error severity (recoverable, requires_buyer_input, requires_buyer_review)
      * @param int $httpStatus HTTP status code
      */
     public static function createError(
         string $status,
         string $code,
         string $message,
-        string $severity = self::SEVERITY_ERROR,
+        string $severity = self::SEVERITY_RECOVERABLE,
         int $httpStatus = 400
     ): WP_REST_Response {
         return new WP_REST_Response([
@@ -102,6 +106,7 @@ class ErrorHandler
 
     /**
      * Create a validation error response with multiple messages.
+     * Per UCP spec, validation errors are recoverable.
      *
      * @param array $errors Array of ['field' => 'error message']
      */
@@ -114,7 +119,7 @@ class ErrorHandler
                 'type' => 'error',
                 'code' => 'invalid_' . $field,
                 'message' => $message,
-                'severity' => self::SEVERITY_ERROR,
+                'severity' => self::SEVERITY_RECOVERABLE,
             ];
         }
 
@@ -140,6 +145,7 @@ class ErrorHandler
 
     /**
      * Create a requires escalation error (needs human intervention).
+     * Per UCP spec, this requires buyer input.
      */
     public static function requiresEscalation(string $reason): WP_REST_Response
     {
@@ -147,7 +153,7 @@ class ErrorHandler
             self::STATUS_REQUIRES_ESCALATION,
             'escalation_required',
             $reason,
-            self::SEVERITY_WARNING,
+            self::SEVERITY_REQUIRES_BUYER_INPUT,
             400
         );
     }

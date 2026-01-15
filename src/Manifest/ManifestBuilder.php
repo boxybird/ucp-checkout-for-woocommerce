@@ -3,12 +3,13 @@
 namespace UcpCheckout\Manifest;
 
 use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\WooCommerce\WooCommerceService;
 
 class ManifestBuilder
 {
     private readonly PluginConfig $config;
 
-    public function __construct(?PluginConfig $config = null)
+    public function __construct(?PluginConfig $config = null, private readonly ?WooCommerceService $wcService = new WooCommerceService())
     {
         $this->config = $config ?? PluginConfig::getInstance();
     }
@@ -32,29 +33,19 @@ class ManifestBuilder
     }
 
     /**
-     * Build payment handlers array.
-     * Returns configured handlers or a placeholder structure.
+     * Build payment handlers array per UCP spec.
+     * Dynamically builds from available WooCommerce payment gateways.
      */
     private function buildPaymentHandlers(): array
     {
+        // First check for explicitly configured handlers
         $handlers = $this->config->getPaymentHandlers();
-
         if (!empty($handlers)) {
             return $handlers;
         }
 
-        // Return placeholder indicating payment handler configuration needed
-        return [
-            [
-                'id' => 'ucp_agent',
-                'name' => 'UCP Agent Payment',
-                'version' => $this->config->getUcpVersion(),
-                'spec' => 'https://ucp.dev/payment-handlers/agent',
-                'config' => [
-                    'supported_methods' => ['card', 'wallet'],
-                ],
-            ],
-        ];
+        // Build handlers dynamically from WooCommerce gateways
+        return $this->wcService->buildPaymentHandlersForManifest();
     }
 
     /**

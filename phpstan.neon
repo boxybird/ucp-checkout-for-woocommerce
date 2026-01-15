@@ -6,3 +6,6 @@ parameters:
     scanDirectories:
         - vendor/php-stubs/wordpress-stubs
         - vendor/php-stubs/woocommerce-stubs
+    # Allow defensive null checks even when PHPDoc says values can't be null
+    # WooCommerce runtime behavior may differ from stub annotations
+    treatPhpDocTypesAsCertain: false

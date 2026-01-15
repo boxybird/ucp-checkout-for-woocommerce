@@ -6,6 +6,7 @@ use UcpCheckout\Checkout\CheckoutSession;
 use UcpCheckout\Checkout\CheckoutSessionRepository;
 use UcpCheckout\Config\PluginConfig;
 use UcpCheckout\Http\ErrorHandler;
+use UcpCheckout\WooCommerce\WooCommerceService;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -13,7 +14,8 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
 {
     public function __construct(
         ?PluginConfig $config = null,
-        private readonly ?CheckoutSessionRepository $repository = new CheckoutSessionRepository()
+        private readonly ?CheckoutSessionRepository $repository = new CheckoutSessionRepository(),
+        private readonly ?WooCommerceService $wcService = new WooCommerceService()
     ) {
         parent::__construct($config);
     }
@@ -52,7 +54,7 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
                     'session_expired',
                     'session_expired',
                     'This checkout session has expired',
-                    'error',
+                    ErrorHandler::SEVERITY_RECOVERABLE,
                     400
                 );
             }
@@ -61,35 +63,38 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
                 'invalid_session_status',
                 'invalid_status',
                 "Session cannot be completed. Current status: {$session->getStatus()}",
-                'error',
+                ErrorHandler::SEVERITY_RECOVERABLE,
                 400
             );
         }
 
-        // Validate completion data
+        // Validate completion data per UCP spec
         $errors = $this->validateCompletionData($params, $session);
         if (!empty($errors)) {
             return $this->validationError($errors);
         }
 
-        // Update session with shipping and payment info
-        if (!empty($params['shipping'])) {
-            $session->setShippingAddress($params['shipping']);
+        // Verify stock is still available before completing
+        $stockErrors = $this->wcService->verifyStock($session->getLineItems());
+        if (!empty($stockErrors)) {
+            return $this->validationError($stockErrors);
         }
 
-        if (!empty($params['shipping_method'])) {
-            $session->setSelectedShippingMethod($params['shipping_method']);
+        // Update session with shipping and payment data
+        if (!empty($params['buyer']['shipping_address'])) {
+            $session->setShippingAddress($params['buyer']['shipping_address']);
         }
 
-        if (!empty($params['payment_token'])) {
-            $session->setPaymentInfo([
-                'token' => $params['payment_token'],
-                'method' => $params['payment_method'] ?? 'ucp_agent',
-            ]);
+        if (!empty($params['fulfillment']['shipping_method'])) {
+            $session->setSelectedShippingMethod($params['fulfillment']['shipping_method']);
         }
 
-        // Mark as processing
-        $session->markProcessing();
+        if (!empty($params['payment_data'])) {
+            $session->setPaymentData($params['payment_data']);
+        }
+
+        // Mark as complete_in_progress
+        $session->markCompleteInProgress();
         $this->repository->save($session);
 
         try {
@@ -99,19 +104,12 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
             $session->markCompleted($order->get_id());
             $this->repository->save($session);
 
-            return $this->success([
-                'session_id' => $session->getId(),
-                'status' => $session->getStatus(),
-                'order_id' => $order->get_id(),
-                'order_status' => $order->get_status(),
-                'total' => $order->get_total(),
-                'currency' => $order->get_currency(),
-            ]);
+            return $this->success($session->toApiResponse());
         } catch (\Exception $e) {
-            // Revert to pending on failure
+            // Revert to incomplete on failure
             $session = CheckoutSession::fromArray(array_merge(
                 $session->toArray(),
-                ['status' => CheckoutSession::STATUS_PENDING]
+                ['status' => CheckoutSession::STATUS_INCOMPLETE]
             ));
             $this->repository->save($session);
 
@@ -120,27 +118,29 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
     }
 
     /**
-     * Validate data required to complete the checkout.
+     * Validate data required to complete the checkout per UCP spec.
      */
     private function validateCompletionData(array $params, CheckoutSession $session): array
     {
         $errors = [];
 
-        // Payment token is required
-        if (empty($params['payment_token'])) {
-            $errors['payment_token'] = 'Payment token is required';
+        // Payment data is required per UCP spec
+        if (empty($params['payment_data'])) {
+            $errors['payment_data'] = 'Payment data is required';
+        } else {
+            // Validate payment data has required fields
+            if (empty($params['payment_data']['handler_id'])) {
+                $errors['payment_data.handler_id'] = 'Payment handler ID is required';
+            }
+            if (empty($params['payment_data']['credential'])) {
+                $errors['payment_data.credential'] = 'Payment credential is required';
+            }
         }
 
         // Shipping address required if not already set
-        if (!$session->getShippingAddress() && empty($params['shipping'])) {
-            $errors['shipping'] = 'Shipping address is required';
-        } elseif (!empty($params['shipping'])) {
-            $requiredFields = ['first_name', 'last_name', 'address', 'city', 'zip', 'country'];
-            foreach ($requiredFields as $field) {
-                if (empty($params['shipping'][$field])) {
-                    $errors["shipping.{$field}"] = ucfirst(str_replace('_', ' ', $field)) . ' is required';
-                }
-            }
+        $shippingAddress = $params['buyer']['shipping_address'] ?? $session->getShippingAddress();
+        if (empty($shippingAddress)) {
+            $errors['buyer.shipping_address'] = 'Shipping address is required';
         }
 
         return $errors;
@@ -153,56 +153,57 @@ class CheckoutSessionCompleteEndpoint extends AbstractEndpoint
     {
         $order = wc_create_order();
 
-        // Add items
-        foreach ($session->getItems() as $item) {
-            $product = wc_get_product($item['product_id']);
+        // Add items from line_items (UCP spec format)
+        foreach ($session->getLineItems() as $lineItem) {
+            $productId = (int) $lineItem['item']['id'];
+            $product = wc_get_product($productId);
             if ($product) {
-                $order->add_product($product, $item['quantity']);
+                $order->add_product($product, $lineItem['quantity']);
             }
         }
 
         // Set shipping address
-        $shipping = $params['shipping'] ?? $session->getShippingAddress();
+        $shipping = $params['buyer']['shipping_address'] ?? $session->getShippingAddress();
         if ($shipping) {
-            $order->set_address([
+            $addressData = [
                 'first_name' => $shipping['first_name'] ?? '',
                 'last_name' => $shipping['last_name'] ?? '',
-                'address_1' => $shipping['address'] ?? '',
-                'address_2' => $shipping['address_2'] ?? '',
-                'city' => $shipping['city'] ?? '',
-                'state' => $shipping['state'] ?? '',
-                'postcode' => $shipping['zip'] ?? '',
-                'country' => $shipping['country'] ?? '',
+                'address_1' => $shipping['street_address'] ?? $shipping['address'] ?? '',
+                'address_2' => $shipping['extended_address'] ?? $shipping['address_2'] ?? '',
+                'city' => $shipping['address_locality'] ?? $shipping['city'] ?? '',
+                'state' => $shipping['address_region'] ?? $shipping['state'] ?? '',
+                'postcode' => $shipping['postal_code'] ?? $shipping['zip'] ?? '',
+                'country' => $shipping['address_country'] ?? $shipping['country'] ?? '',
                 'email' => $shipping['email'] ?? '',
                 'phone' => $shipping['phone'] ?? '',
-            ], 'shipping');
-
-            // Also set as billing address
-            $order->set_address([
-                'first_name' => $shipping['first_name'] ?? '',
-                'last_name' => $shipping['last_name'] ?? '',
-                'address_1' => $shipping['address'] ?? '',
-                'address_2' => $shipping['address_2'] ?? '',
-                'city' => $shipping['city'] ?? '',
-                'state' => $shipping['state'] ?? '',
-                'postcode' => $shipping['zip'] ?? '',
-                'country' => $shipping['country'] ?? '',
-                'email' => $shipping['email'] ?? '',
-                'phone' => $shipping['phone'] ?? '',
-            ], 'billing');
+            ];
+            $order->set_address($addressData, 'shipping');
+            $order->set_address($addressData, 'billing');
         }
 
-        // Set payment method
-        $order->set_payment_method($params['payment_method'] ?? 'ucp_agent');
-        $order->set_transaction_id($params['payment_token']);
-
-        // Add metadata
+        // Add UCP metadata before payment processing
         $order->add_meta_data('_ucp_session_id', $session->getId());
         $order->add_meta_data('_ucp_agent_checkout', '1');
 
-        // Calculate totals and complete payment
+        // Calculate totals before payment
         $order->calculate_totals();
-        $order->payment_complete();
+        $order->save();
+
+        // Process payment through WooCommerce gateway
+        $paymentData = $params['payment_data'] ?? [];
+        $paymentResult = $this->wcService->processPayment($order, $paymentData);
+
+        if (!$paymentResult['success']) {
+            // Payment failed - cancel the order and throw exception
+            $order->update_status('failed', $paymentResult['message']);
+            throw new \Exception($paymentResult['message'], 400);
+        }
+
+        // Reduce stock levels after successful payment
+        $this->wcService->reduceStock($order);
+
+        // Fire UCP-specific action for integrations
+        do_action('ucp_checkout_order_created', $order, $session);
 
         return $order;
     }

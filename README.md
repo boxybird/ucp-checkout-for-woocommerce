@@ -5,17 +5,18 @@
 <h1 align="center">UCP Checkout for WooCommerce</h1>
 
 <p align="center">
-  Enable AI agents like ChatGPT, Gemini, and Claude to discover and purchase products from your WooCommerce store using the <a href="https://ucp.dev">Universal Commerce Protocol (UCP)</a>.
+  Enable AI agents like ChatGPT, Gemini, and Claude to purchase products from your WooCommerce store using the <a href="https://ucp.dev">Universal Commerce Protocol (UCP)</a>.
 </p>
 
 ## What is UCP?
 
-The Universal Commerce Protocol (UCP) is an open standard that allows AI agents to interact with e-commerce stores programmatically. It provides a standardized way for AI assistants to:
+The Universal Commerce Protocol (UCP) is an open standard developed by Google and industry partners that allows AI agents to interact with e-commerce stores programmatically. It provides a standardized way for AI assistants to:
 
-- Search for products
-- Check availability and pricing
-- Get shipping estimates
+- Create and manage checkout sessions
 - Complete purchases on behalf of users
+- Handle payment processing securely
+
+This plugin implements the **Checkout capability** (`dev.ucp.shopping.checkout`) from UCP specification version `2026-01-11`.
 
 Learn more at [ucp.dev](https://ucp.dev).
 
@@ -44,161 +45,56 @@ This manifest advertises your store's capabilities and API endpoints to AI agent
 
 ## API Endpoints
 
-All endpoints are available under the `/wp-json/ucp/v1/` namespace.
-
-### Product Search
-
-Search your product catalog.
-
-```
-GET /wp-json/ucp/v1/search?q={query}&limit={limit}
-```
-
-**Parameters:**
-- `q` (required): Search query
-- `limit` (optional): Maximum results (1-20, default: 5)
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {
-    "query": "shirt",
-    "count": 2,
-    "results": [
-      {
-        "name": "Blue T-Shirt",
-        "sku": "SHIRT-001",
-        "price": "29.99",
-        "currency": "USD",
-        "in_stock": true,
-        "image": "https://...",
-        "url": "https://..."
-      }
-    ]
-  }
-}
-```
-
-### Product Availability
-
-Check real-time availability and pricing for a specific product.
-
-```
-GET /wp-json/ucp/v1/availability?sku={sku}
-```
-
-**Parameters:**
-- `sku` (required): Product SKU
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {
-    "sku": "SHIRT-001",
-    "name": "Blue T-Shirt",
-    "in_stock": true,
-    "stock_status": "instock",
-    "stock_quantity": 50,
-    "price": "29.99",
-    "regular_price": "34.99",
-    "sale_price": "29.99",
-    "currency": "USD",
-    "backorders_allowed": false
-  }
-}
-```
-
-### Shipping Estimate
-
-Get shipping options and cost estimates for a product.
-
-```
-POST /wp-json/ucp/v1/estimate
-Content-Type: application/json
-
-{
-  "sku": "SHIRT-001",
-  "quantity": 2,
-  "zip": "90210",
-  "country": "US",
-  "state": "CA"
-}
-```
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {
-    "sku": "SHIRT-001",
-    "quantity": 2,
-    "unit_price": 29.99,
-    "subtotal": 59.98,
-    "tax": 5.25,
-    "currency": "USD",
-    "shipping_options": [
-      {
-        "id": "flat_rate:1",
-        "method_id": "flat_rate",
-        "label": "Standard Shipping",
-        "cost": 5.99,
-        "currency": "USD"
-      }
-    ],
-    "destination": {
-      "country": "US",
-      "state": "CA",
-      "postcode": "90210"
-    }
-  }
-}
-```
+All endpoints are available under the `/wp-json/ucp/v1/` namespace and implement the [UCP Checkout capability](https://ucp.dev/specification/checkout/).
 
 ### Create Checkout Session
 
-Initialize a checkout session with items to purchase.
+Initialize a checkout session with line items. Prices are returned in minor units (cents).
 
 ```
 POST /wp-json/ucp/v1/checkout-sessions
 Content-Type: application/json
 
 {
-  "items": [
-    { "sku": "SHIRT-001", "quantity": 2 }
+  "line_items": [
+    {
+      "item": { "id": "123" },
+      "quantity": 2
+    }
   ],
-  "shipping": {
-    "first_name": "John",
-    "last_name": "Doe",
-    "address": "123 Main St",
-    "city": "Beverly Hills",
-    "state": "CA",
-    "zip": "90210",
-    "country": "US"
-  }
-}
-```
-
-**Shorthand for single item:**
-```json
-{
-  "sku": "SHIRT-001",
-  "quantity": 1
+  "currency": "USD"
 }
 ```
 
 **Response:**
 ```json
 {
-  "status": "success",
-  "data": {
-    "session_id": "ucp_sess_abc123...",
-    "status": "pending",
-    "items": [...],
-    "created_at": "2026-01-14T12:00:00Z",
-    "expires_at": "2026-01-14T12:30:00Z"
-  }
+  "ucp": {
+    "version": "2026-01-11",
+    "capabilities": [{ "name": "dev.ucp.shopping.checkout", "version": "2026-01-11" }]
+  },
+  "id": "ucp_sess_abc123...",
+  "status": "incomplete",
+  "line_items": [
+    {
+      "item": {
+        "id": "123",
+        "title": "Blue T-Shirt",
+        "unit_price": 2999,
+        "image": "https://..."
+      },
+      "quantity": 2,
+      "totals": [{ "type": "subtotal", "amount": 5998 }]
+    }
+  ],
+  "currency": "USD",
+  "totals": [
+    { "type": "subtotal", "amount": 5998 },
+    { "type": "total", "amount": 5998 }
+  ],
+  "payment": { "handlers": [...] },
+  "links": { "privacy_policy": "...", "terms_of_service": "..." },
+  "expires_at": "2026-01-14T18:00:00Z"
 }
 ```
 
@@ -207,7 +103,33 @@ Content-Type: application/json
 Retrieve the current state of a checkout session.
 
 ```
-GET /wp-json/ucp/v1/checkout-sessions/{session_id}
+GET /wp-json/ucp/v1/checkout-sessions/{id}
+```
+
+### Update Checkout Session
+
+Update line items or buyer information for an existing session.
+
+```
+PUT /wp-json/ucp/v1/checkout-sessions/{id}
+Content-Type: application/json
+
+{
+  "line_items": [
+    { "item": { "id": "123" }, "quantity": 3 }
+  ],
+  "buyer": {
+    "shipping_address": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "street_address": "123 Main St",
+      "address_locality": "Beverly Hills",
+      "address_region": "CA",
+      "postal_code": "90210",
+      "address_country": "US"
+    }
+  }
+}
 ```
 
 ### Complete Checkout
@@ -215,39 +137,62 @@ GET /wp-json/ucp/v1/checkout-sessions/{session_id}
 Finalize the purchase and create a WooCommerce order.
 
 ```
-POST /wp-json/ucp/v1/checkout-sessions/{session_id}/complete
+POST /wp-json/ucp/v1/checkout-sessions/{id}/complete
 Content-Type: application/json
 
 {
-  "payment_token": "tok_...",
-  "payment_method": "ucp_agent",
-  "shipping": {
-    "first_name": "John",
-    "last_name": "Doe",
-    "address": "123 Main St",
-    "city": "Beverly Hills",
-    "state": "CA",
-    "zip": "90210",
-    "country": "US",
-    "email": "john@example.com",
-    "phone": "555-1234"
+  "payment_data": {
+    "handler_id": "ucp_agent",
+    "credential": {
+      "type": "token",
+      "token": "tok_..."
+    }
   },
-  "shipping_method": "flat_rate:1"
+  "buyer": {
+    "shipping_address": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "street_address": "123 Main St",
+      "address_locality": "Beverly Hills",
+      "address_region": "CA",
+      "postal_code": "90210",
+      "address_country": "US",
+      "email": "john@example.com",
+      "phone": "555-1234"
+    }
+  }
 }
 ```
 
 **Response:**
 ```json
 {
-  "status": "success",
-  "data": {
-    "session_id": "ucp_sess_abc123...",
-    "status": "completed",
-    "order_id": 1234,
-    "order_status": "processing",
-    "total": "71.22",
-    "currency": "USD"
-  }
+  "ucp": { "version": "2026-01-11", "capabilities": [...] },
+  "id": "ucp_sess_abc123...",
+  "status": "completed",
+  "order": {
+    "id": "1234",
+    "status": "confirmed"
+  },
+  ...
+}
+```
+
+### Cancel Checkout Session
+
+Cancel an incomplete checkout session.
+
+```
+POST /wp-json/ucp/v1/checkout-sessions/{id}/cancel
+```
+
+**Response:**
+```json
+{
+  "ucp": { "version": "2026-01-11", "capabilities": [...] },
+  "id": "ucp_sess_abc123...",
+  "status": "canceled",
+  ...
 }
 ```
 
@@ -255,20 +200,20 @@ Content-Type: application/json
 
 The plugin automatically serves a UCP manifest at `/.well-known/ucp` that advertises:
 
-- **UCP Version**: Protocol version supported
+- **UCP Version**: Protocol version supported (`2026-01-11`)
 - **Services**: Available commerce services and their REST endpoints
-- **Capabilities**: Supported features (product search, availability, shipping estimates, checkout)
-- **Payment Handlers**: Configured payment processing options
+- **Capabilities**: Supported features (Checkout capability)
+- **Payment Handlers**: Configured payment processing options with schemas
 
 Example manifest:
 ```json
 {
   "ucp": {
-    "version": "2026-01-01",
+    "version": "2026-01-11",
     "services": {
-      "dev.ucp.commerce": {
-        "version": "2026-01-01",
-        "spec": "https://ucp.dev/services/commerce",
+      "dev.ucp.shopping": {
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/overview",
         "rest": {
           "schema": "https://your-store.com/.well-known/ucp/openapi.json",
           "endpoint": "https://your-store.com/wp-json/ucp/v1"
@@ -277,29 +222,23 @@ Example manifest:
     },
     "capabilities": [
       {
-        "name": "dev.ucp.product-search",
-        "version": "2026-01-01",
-        "spec": "https://ucp.dev/capabilities/product-search"
-      },
-      {
-        "name": "dev.ucp.availability",
-        "version": "2026-01-01",
-        "spec": "https://ucp.dev/capabilities/availability"
-      },
-      {
-        "name": "dev.ucp.shipping-estimate",
-        "version": "2026-01-01",
-        "spec": "https://ucp.dev/capabilities/shipping-estimate"
-      },
-      {
-        "name": "dev.ucp.checkout",
-        "version": "2026-01-01",
-        "spec": "https://ucp.dev/capabilities/checkout"
+        "name": "dev.ucp.shopping.checkout",
+        "version": "2026-01-11",
+        "spec": "https://ucp.dev/specification/checkout",
+        "schema": "https://ucp.dev/schemas/shopping/checkout.json"
       }
     ]
   },
   "payment": {
-    "handlers": [...]
+    "handlers": [
+      {
+        "id": "ucp_agent",
+        "name": "dev.ucp.payment.agent",
+        "version": "2026-01-11",
+        "config_schema": "https://ucp.dev/schemas/payment/agent-config.json",
+        "instrument_schemas": ["https://ucp.dev/schemas/payment/card-instrument.json"]
+      }
+    ]
   },
   "signing_keys": [...]
 }
@@ -307,7 +246,7 @@ Example manifest:
 
 ## Error Handling
 
-All error responses follow the UCP error format:
+All error responses follow the UCP error format with spec-compliant severity values:
 
 ```json
 {
@@ -315,9 +254,9 @@ All error responses follow the UCP error format:
   "messages": [
     {
       "type": "error",
-      "code": "invalid_sku",
-      "message": "SKU is required",
-      "severity": "error"
+      "code": "invalid_line_items",
+      "message": "line_items array is required",
+      "severity": "recoverable"
     }
   ]
 }
@@ -330,17 +269,23 @@ All error responses follow the UCP error format:
 - `unauthorized` - Authentication required
 - `requires_escalation` - Human intervention needed
 
+**Severity Values (per UCP spec):**
+- `recoverable` - Platform can fix via API
+- `requires_buyer_input` - Missing non-API-collectible data
+- `requires_buyer_review` - Policy/regulatory authorization needed
+
 ## Checkout Session States
 
-Sessions progress through these states:
+Sessions progress through these states (per [UCP Checkout specification](https://ucp.dev/specification/checkout/)):
 
 | Status | Description |
 |--------|-------------|
-| `pending` | Session created, awaiting completion |
-| `processing` | Payment being processed |
-| `completed` | Order created successfully |
-| `expired` | Session timed out (30 min default) |
-| `cancelled` | Session was cancelled |
+| `incomplete` | Missing required information; platform should update |
+| `requires_escalation` | Needs buyer handoff via `continue_url` |
+| `ready_for_complete` | All information collected; platform can finalize |
+| `complete_in_progress` | Business processing the completion request |
+| `completed` | Order successfully placed |
+| `canceled` | Session terminated or expired |
 
 ## Development
 
@@ -363,8 +308,8 @@ This runs:
 
 ## Resources
 
-- [UCP Specification](https://ucp.dev)
-- [UCP Developer Documentation](https://ucp.dev/docs)
+- [UCP Specification Overview](https://ucp.dev/specification/overview/)
+- [UCP Checkout Capability](https://ucp.dev/specification/checkout/)
 - [WooCommerce REST API](https://woocommerce.github.io/woocommerce-rest-api-docs/)
 
 ## License

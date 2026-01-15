@@ -31,37 +31,31 @@ class CheckoutSessionCreateEndpoint extends AbstractEndpoint
     {
         $params = $request->get_json_params();
 
-        // Validate items
-        if (empty($params['items']) && empty($params['sku'])) {
+        // UCP spec requires line_items array
+        if (empty($params['line_items'])) {
             return $this->validationError([
-                'items' => 'At least one item is required (provide items array or sku)',
+                'line_items' => 'line_items array is required',
             ]);
         }
 
-        // Support both single SKU and items array
-        $items = $this->normalizeItems($params);
-
-        if (empty($items)) {
-            return $this->validationError([
-                'items' => 'No valid items provided',
-            ]);
-        }
+        // Validate currency
+        $currency = $params['currency'] ?? get_woocommerce_currency();
 
         // Validate all products exist and are available
-        $validationErrors = $this->validateItems($items);
+        $validationErrors = $this->validateLineItems($params['line_items']);
         if (!empty($validationErrors)) {
             return $this->validationError($validationErrors);
         }
 
-        // Enrich items with product data
-        $enrichedItems = $this->enrichItems($items);
+        // Build UCP spec-compliant line items
+        $lineItems = $this->buildLineItems($params['line_items']);
 
         // Create the session
-        $session = CheckoutSession::create($enrichedItems);
+        $session = CheckoutSession::create($lineItems, $currency);
 
-        // Optionally set shipping address if provided
-        if (!empty($params['shipping'])) {
-            $session->setShippingAddress($params['shipping']);
+        // Optionally set shipping address if provided (buyer info)
+        if (!empty($params['buyer']['shipping_address'])) {
+            $session->setShippingAddress($params['buyer']['shipping_address']);
         }
 
         // Save session
@@ -71,54 +65,35 @@ class CheckoutSessionCreateEndpoint extends AbstractEndpoint
     }
 
     /**
-     * Normalize input to items array.
+     * Validate all line items have valid products.
      */
-    private function normalizeItems(array $params): array
-    {
-        if (!empty($params['items'])) {
-            return $params['items'];
-        }
-
-        // Single SKU shorthand
-        if (!empty($params['sku'])) {
-            return [
-                [
-                    'sku' => $params['sku'],
-                    'quantity' => (int) ($params['quantity'] ?? 1),
-                ],
-            ];
-        }
-
-        return [];
-    }
-
-    /**
-     * Validate all items have valid products.
-     */
-    private function validateItems(array $items): array
+    private function validateLineItems(array $lineItems): array
     {
         $errors = [];
 
-        foreach ($items as $index => $item) {
-            if (empty($item['sku'])) {
-                $errors["items.{$index}.sku"] = 'SKU is required';
+        foreach ($lineItems as $index => $lineItem) {
+            $itemId = $lineItem['item']['id'] ?? $lineItem['item_id'] ?? null;
+
+            if (empty($itemId)) {
+                $errors["line_items.{$index}.item.id"] = 'Item ID is required';
                 continue;
             }
 
-            $productId = wc_get_product_id_by_sku($item['sku']);
-            if (!$productId) {
-                $errors["items.{$index}.sku"] = "Product not found: {$item['sku']}";
-                continue;
-            }
+            // Item ID can be product ID or SKU
+            $product = $this->findProduct($itemId);
 
-            $product = wc_get_product($productId);
             if (!$product) {
-                $errors["items.{$index}.sku"] = "Product not found: {$item['sku']}";
+                $errors["line_items.{$index}.item.id"] = "Product not found: {$itemId}";
                 continue;
             }
 
             if (!$product->is_in_stock()) {
-                $errors["items.{$index}.sku"] = "Product out of stock: {$item['sku']}";
+                $errors["line_items.{$index}.item.id"] = "Product out of stock: {$itemId}";
+            }
+
+            $quantity = $lineItem['quantity'] ?? 1;
+            if ($quantity < 1) {
+                $errors["line_items.{$index}.quantity"] = 'Quantity must be at least 1';
             }
         }
 
@@ -126,28 +101,59 @@ class CheckoutSessionCreateEndpoint extends AbstractEndpoint
     }
 
     /**
-     * Enrich items with product data.
+     * Build UCP spec-compliant line items from input.
+     * Prices are in minor units (cents).
      */
-    private function enrichItems(array $items): array
+    private function buildLineItems(array $inputItems): array
     {
-        $enriched = [];
+        $lineItems = [];
 
-        foreach ($items as $item) {
-            $productId = wc_get_product_id_by_sku($item['sku']);
-            $product = wc_get_product($productId);
-            $quantity = (int) ($item['quantity'] ?? 1);
+        foreach ($inputItems as $inputItem) {
+            $itemId = $inputItem['item']['id'] ?? $inputItem['item_id'];
+            $product = $this->findProduct($itemId);
+            $quantity = (int) ($inputItem['quantity'] ?? 1);
 
-            $enriched[] = [
-                'sku' => $item['sku'],
-                'product_id' => $productId,
-                'name' => $product->get_name(),
+            // Convert price to minor units (cents)
+            $unitPriceCents = (int) round((float) $product->get_price() * 100);
+            $subtotalCents = $unitPriceCents * $quantity;
+
+            $imageId = $product->get_image_id();
+            $imageUrl = $imageId ? wp_get_attachment_url((int) $imageId) : null;
+
+            $lineItems[] = [
+                'item' => [
+                    'id' => (string) $product->get_id(),
+                    'title' => $product->get_name(),
+                    'unit_price' => $unitPriceCents,
+                    'image' => $imageUrl ?: null,
+                ],
                 'quantity' => $quantity,
-                'unit_price' => (float) $product->get_price(),
-                'line_total' => (float) $product->get_price() * $quantity,
-                'currency' => get_woocommerce_currency(),
+                'totals' => [
+                    ['type' => 'subtotal', 'amount' => $subtotalCents],
+                ],
             ];
         }
 
-        return $enriched;
+        return $lineItems;
+    }
+
+    /**
+     * Find product by ID or SKU.
+     */
+    private function findProduct(string $itemId): ?\WC_Product
+    {
+        // Try as product ID first
+        $product = wc_get_product((int) $itemId);
+        if ($product) {
+            return $product;
+        }
+
+        // Try as SKU
+        $productId = wc_get_product_id_by_sku($itemId);
+        if ($productId) {
+            return wc_get_product($productId);
+        }
+
+        return null;
     }
 }

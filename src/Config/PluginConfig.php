@@ -4,7 +4,7 @@ namespace UcpCheckout\Config;
 
 class PluginConfig
 {
-    public const UCP_VERSION = '2026-01-01';
+    public const UCP_VERSION = '2026-01-11';
     public const API_NAMESPACE = 'ucp/v1';
     public const OPTION_KEY = 'ucp_plugin_settings';
 
@@ -79,28 +79,10 @@ class PluginConfig
     {
         return [
             [
-                'name' => 'dev.ucp.product-search',
+                'name' => 'dev.ucp.shopping.checkout',
                 'version' => self::UCP_VERSION,
-                'spec' => 'https://ucp.dev/capabilities/product-search',
-                'schema' => 'https://ucp.dev/schemas/product-search.json',
-            ],
-            [
-                'name' => 'dev.ucp.availability',
-                'version' => self::UCP_VERSION,
-                'spec' => 'https://ucp.dev/capabilities/availability',
-                'schema' => 'https://ucp.dev/schemas/availability.json',
-            ],
-            [
-                'name' => 'dev.ucp.shipping-estimate',
-                'version' => self::UCP_VERSION,
-                'spec' => 'https://ucp.dev/capabilities/shipping-estimate',
-                'schema' => 'https://ucp.dev/schemas/shipping-estimate.json',
-            ],
-            [
-                'name' => 'dev.ucp.checkout',
-                'version' => self::UCP_VERSION,
-                'spec' => 'https://ucp.dev/capabilities/checkout',
-                'schema' => 'https://ucp.dev/schemas/checkout.json',
+                'spec' => 'https://ucp.dev/specification/checkout',
+                'schema' => 'https://ucp.dev/schemas/shopping/checkout.json',
             ],
         ];
     }
@@ -113,9 +95,9 @@ class PluginConfig
         $baseUrl = rest_url(self::API_NAMESPACE);
 
         return [
-            'dev.ucp.commerce' => [
+            'dev.ucp.shopping' => [
                 'version' => self::UCP_VERSION,
-                'spec' => 'https://ucp.dev/services/commerce',
+                'spec' => 'https://ucp.dev/specification/overview',
                 'rest' => [
                     'schema' => home_url('/.well-known/ucp/openapi.json'),
                     'endpoint' => rtrim($baseUrl, '/'),

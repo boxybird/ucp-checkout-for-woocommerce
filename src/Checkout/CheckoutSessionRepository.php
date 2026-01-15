@@ -30,9 +30,10 @@ class CheckoutSessionRepository
 
         $session = CheckoutSession::fromArray($data);
 
-        // Check if expired and update status
-        if ($session->isExpired() && $session->getStatus() === CheckoutSession::STATUS_PENDING) {
-            $session->markExpired();
+        // Check if expired and update status to canceled
+        // Per UCP spec, expired sessions should be marked as canceled
+        if ($session->isExpired() && $session->getStatus() === CheckoutSession::STATUS_INCOMPLETE) {
+            $session->markCanceled();
             $this->save($session);
         }
 

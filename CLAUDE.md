@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**UCP Checkout for WooCommerce** is a WordPress plugin implementing the Universal Commerce Protocol (UCP), enabling AI agents (ChatGPT, Gemini, Claude) to discover, search, and purchase products from WooCommerce stores.
+**UCP Checkout for WooCommerce** is a WordPress plugin implementing the [Universal Commerce Protocol (UCP)](https://ucp.dev), enabling AI agents (ChatGPT, Gemini, Claude) to discover and purchase products from WooCommerce stores.
+
+**UCP Version:** `2026-01-11`
 
 ## Architecture
 
@@ -26,13 +28,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     │   ├── CheckoutSession.php           # Session model
     │   └── CheckoutSessionRepository.php # Session storage (transients)
     └── Endpoints/
-        ├── AbstractEndpoint.php              # Base class for all endpoints
-        ├── SearchEndpoint.php                # GET /search
-        ├── AvailabilityEndpoint.php          # GET /availability
-        ├── EstimateEndpoint.php              # POST /estimate
-        ├── CheckoutSessionCreateEndpoint.php # POST /checkout-sessions
-        ├── CheckoutSessionGetEndpoint.php    # GET /checkout-sessions/{id}
-        └── CheckoutSessionCompleteEndpoint.php # POST /checkout-sessions/{id}/complete
+        ├── AbstractEndpoint.php               # Base class for all endpoints
+        ├── CheckoutSessionCreateEndpoint.php  # POST /checkout-sessions
+        ├── CheckoutSessionGetEndpoint.php     # GET /checkout-sessions/{id}
+        ├── CheckoutSessionUpdateEndpoint.php  # PUT /checkout-sessions/{id}
+        ├── CheckoutSessionCompleteEndpoint.php # POST /checkout-sessions/{id}/complete
+        └── CheckoutSessionCancelEndpoint.php  # POST /checkout-sessions/{id}/cancel
 ```
 
 ### Namespace
@@ -73,33 +74,55 @@ class MyEndpoint extends AbstractEndpoint
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/search` | GET | Search products (`?q=query&limit=5`) |
-| `/availability` | GET | Stock/price by SKU (`?sku=XXX`) |
-| `/estimate` | POST | Shipping/tax estimate |
 | `/checkout-sessions` | POST | Create checkout session |
 | `/checkout-sessions/{id}` | GET | Get session status |
+| `/checkout-sessions/{id}` | PUT | Update checkout session |
 | `/checkout-sessions/{id}/complete` | POST | Complete checkout |
+| `/checkout-sessions/{id}/cancel` | POST | Cancel checkout session |
 
 ## UCP Protocol Compliance
+
+Implements [UCP Specification](https://ucp.dev/specification/overview/) version `2026-01-11`.
+
+**Capability:** `dev.ucp.shopping.checkout`
 
 **Manifest** (/.well-known/ucp):
 ```json
 {
-  "ucp": { "version": "2026-01-01", "services": {...}, "capabilities": [...] },
+  "ucp": {
+    "version": "2026-01-11",
+    "services": { "dev.ucp.shopping": {...} },
+    "capabilities": [{ "name": "dev.ucp.shopping.checkout", ... }]
+  },
   "payment": { "handlers": [...] },
   "signing_keys": [...]
 }
 ```
 
-**Responses** - All wrapped with UCP envelope:
+**Responses** - Data at root level alongside UCP envelope (per spec):
 ```json
-{ "ucp": { "version": "...", "capabilities": [...] }, "data": {...} }
+{
+  "ucp": { "version": "2026-01-11", "capabilities": [...] },
+  "id": "...",
+  "status": "incomplete",
+  "line_items": [...],
+  "totals": [...],
+  "currency": "USD"
+}
 ```
 
-**Errors**:
+**Errors** - Severity uses UCP spec values (`recoverable`, `requires_buyer_input`, `requires_buyer_review`):
 ```json
-{ "status": "validation_error", "messages": [{ "type": "error", "code": "...", "message": "..." }] }
+{ "status": "validation_error", "messages": [{ "type": "error", "code": "...", "message": "...", "severity": "recoverable" }] }
 ```
+
+**Session Status Values** (per UCP spec):
+- `incomplete` - Missing required information
+- `requires_escalation` - Needs buyer handoff
+- `ready_for_complete` - All information collected
+- `complete_in_progress` - Processing completion
+- `completed` - Order placed successfully
+- `canceled` - Session terminated
 
 ## Development
 
@@ -113,21 +136,41 @@ composer install
 # Manifest
 curl http://yoursite.local/.well-known/ucp | jq .
 
-# Search
-curl "http://yoursite.local/wp-json/ucp/v1/search?q=shirt" | jq .
-
-# Create checkout session
+# Create checkout session (UCP spec format)
 curl -X POST "http://yoursite.local/wp-json/ucp/v1/checkout-sessions" \
   -H "Content-Type: application/json" \
-  -d '{"sku": "TEST123", "quantity": 1}' | jq .
+  -d '{"line_items": [{"item": {"id": "123"}, "quantity": 1}], "currency": "USD"}' | jq .
 
-# Complete checkout
+# Get checkout session
+curl "http://yoursite.local/wp-json/ucp/v1/checkout-sessions/{id}" | jq .
+
+# Update checkout session
+curl -X PUT "http://yoursite.local/wp-json/ucp/v1/checkout-sessions/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"line_items": [{"item": {"id": "123"}, "quantity": 2}]}' | jq .
+
+# Complete checkout (UCP spec format)
 curl -X POST "http://yoursite.local/wp-json/ucp/v1/checkout-sessions/{id}/complete" \
   -H "Content-Type: application/json" \
-  -d '{"payment_token": "tok_xxx", "shipping": {...}}' | jq .
+  -d '{"payment_data": {"handler_id": "ucp_agent", "credential": {"token": "tok_xxx"}}, "buyer": {"shipping_address": {...}}}' | jq .
+
+# Cancel checkout
+curl -X POST "http://yoursite.local/wp-json/ucp/v1/checkout-sessions/{id}/cancel" | jq .
+```
+
+### Run Tests
+```bash
+composer test
 ```
 
 ### Dependencies
 - WordPress 6.0+
 - WooCommerce 8.0+
 - PHP 8.0+
+
+## Resources
+
+- [UCP Official Site](https://ucp.dev/)
+- [UCP Specification](https://ucp.dev/specification/overview/)
+- [UCP Checkout Capability](https://ucp.dev/specification/checkout/)
+- [UCP GitHub](https://github.com/Universal-Commerce-Protocol/ucp)

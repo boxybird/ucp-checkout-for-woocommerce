@@ -4,13 +4,16 @@ namespace UcpCheckout;
 
 use UcpCheckout\Checkout\CheckoutSessionRepository;
 use UcpCheckout\Config\PluginConfig;
-use UcpCheckout\Endpoints\AvailabilityEndpoint;
+use UcpCheckout\Endpoints\CheckoutSessionCancelEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionCompleteEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionCreateEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionGetEndpoint;
-use UcpCheckout\Endpoints\EstimateEndpoint;
-use UcpCheckout\Endpoints\SearchEndpoint;
+use UcpCheckout\Endpoints\CheckoutSessionUpdateEndpoint;
 use UcpCheckout\Manifest\ManifestBuilder;
+use UcpCheckout\WooCommerce\PaymentGatewayAdapter;
+use UcpCheckout\WooCommerce\ShippingCalculator;
+use UcpCheckout\WooCommerce\TaxCalculator;
+use UcpCheckout\WooCommerce\WooCommerceService;
 
 class Container
 {
@@ -58,17 +61,24 @@ class Container
         // Core services
         $container->register(PluginConfig::class, fn() => PluginConfig::getInstance());
 
-        $container->register(ManifestBuilder::class, fn(Container $c) => new ManifestBuilder($c->get(PluginConfig::class)));
+        // WooCommerce integration services
+        $container->register(TaxCalculator::class, fn() => new TaxCalculator());
+        $container->register(ShippingCalculator::class, fn() => new ShippingCalculator());
+        $container->register(PaymentGatewayAdapter::class, fn() => new PaymentGatewayAdapter());
+        $container->register(WooCommerceService::class, fn(Container $c) => new WooCommerceService(
+            $c->get(TaxCalculator::class),
+            $c->get(ShippingCalculator::class),
+            $c->get(PaymentGatewayAdapter::class)
+        ));
+
+        $container->register(ManifestBuilder::class, fn(Container $c) => new ManifestBuilder(
+            $c->get(PluginConfig::class),
+            $c->get(WooCommerceService::class)
+        ));
 
         $container->register(CheckoutSessionRepository::class, fn() => new CheckoutSessionRepository());
 
-        // Endpoints
-        $container->register(SearchEndpoint::class, fn(Container $c) => new SearchEndpoint($c->get(PluginConfig::class)));
-
-        $container->register(AvailabilityEndpoint::class, fn(Container $c) => new AvailabilityEndpoint($c->get(PluginConfig::class)));
-
-        $container->register(EstimateEndpoint::class, fn(Container $c) => new EstimateEndpoint($c->get(PluginConfig::class)));
-
+        // Checkout Session Endpoints
         $container->register(CheckoutSessionCreateEndpoint::class, fn(Container $c) => new CheckoutSessionCreateEndpoint(
             $c->get(PluginConfig::class),
             $c->get(CheckoutSessionRepository::class)
@@ -79,7 +89,19 @@ class Container
             $c->get(CheckoutSessionRepository::class)
         ));
 
+        $container->register(CheckoutSessionUpdateEndpoint::class, fn(Container $c) => new CheckoutSessionUpdateEndpoint(
+            $c->get(PluginConfig::class),
+            $c->get(CheckoutSessionRepository::class),
+            $c->get(WooCommerceService::class)
+        ));
+
         $container->register(CheckoutSessionCompleteEndpoint::class, fn(Container $c) => new CheckoutSessionCompleteEndpoint(
+            $c->get(PluginConfig::class),
+            $c->get(CheckoutSessionRepository::class),
+            $c->get(WooCommerceService::class)
+        ));
+
+        $container->register(CheckoutSessionCancelEndpoint::class, fn(Container $c) => new CheckoutSessionCancelEndpoint(
             $c->get(PluginConfig::class),
             $c->get(CheckoutSessionRepository::class)
         ));
@@ -93,12 +115,11 @@ class Container
     public function getEndpointClasses(): array
     {
         return [
-            SearchEndpoint::class,
-            AvailabilityEndpoint::class,
-            EstimateEndpoint::class,
             CheckoutSessionCreateEndpoint::class,
             CheckoutSessionGetEndpoint::class,
+            CheckoutSessionUpdateEndpoint::class,
             CheckoutSessionCompleteEndpoint::class,
+            CheckoutSessionCancelEndpoint::class,
         ];
     }
 }

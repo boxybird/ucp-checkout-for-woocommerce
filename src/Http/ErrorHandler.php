@@ -1,0 +1,151 @@
+<?php
+
+namespace UcpPlugin\Http;
+
+use WP_REST_Response;
+use Exception;
+
+class ErrorHandler
+{
+    public const SEVERITY_ERROR = 'error';
+    public const SEVERITY_WARNING = 'warning';
+    public const SEVERITY_INFO = 'info';
+
+    public const STATUS_ERROR = 'error';
+    public const STATUS_VALIDATION_ERROR = 'validation_error';
+    public const STATUS_NOT_FOUND = 'not_found';
+    public const STATUS_UNAUTHORIZED = 'unauthorized';
+    public const STATUS_REQUIRES_ESCALATION = 'requires_escalation';
+    public const STATUS_VERSION_UNSUPPORTED = 'version_unsupported';
+
+    /**
+     * Create a UCP-compliant error response.
+     *
+     * @param string $status Error status type
+     * @param string $code Error code
+     * @param string $message Human-readable message
+     * @param string $severity Error severity
+     * @param int $httpStatus HTTP status code
+     */
+    public static function createError(
+        string $status,
+        string $code,
+        string $message,
+        string $severity = self::SEVERITY_ERROR,
+        int $httpStatus = 400
+    ): WP_REST_Response {
+        return new WP_REST_Response([
+            'status' => $status,
+            'messages' => [
+                [
+                    'type' => 'error',
+                    'code' => $code,
+                    'message' => $message,
+                    'severity' => $severity,
+                ],
+            ],
+        ], $httpStatus);
+    }
+
+    /**
+     * Create error response from an exception.
+     */
+    public static function fromException(Exception $e, string $status = self::STATUS_ERROR): WP_REST_Response
+    {
+        $httpStatus = 500;
+
+        if (method_exists($e, 'getCode') && $e->getCode() >= 400 && $e->getCode() < 600) {
+            $httpStatus = $e->getCode();
+        }
+
+        return self::createError(
+            $status,
+            self::exceptionToCode($e),
+            $e->getMessage(),
+            self::SEVERITY_ERROR,
+            $httpStatus
+        );
+    }
+
+    /**
+     * Create a not found error response.
+     */
+    public static function notFound(string $resource, string $identifier = ''): WP_REST_Response
+    {
+        $message = $identifier
+            ? sprintf('%s not found: %s', ucfirst($resource), $identifier)
+            : sprintf('%s not found', ucfirst($resource));
+
+        return self::createError(
+            self::STATUS_NOT_FOUND,
+            $resource . '_not_found',
+            $message,
+            self::SEVERITY_ERROR,
+            404
+        );
+    }
+
+    /**
+     * Create a validation error response with multiple messages.
+     *
+     * @param array $errors Array of ['field' => 'error message']
+     */
+    public static function validationError(array $errors): WP_REST_Response
+    {
+        $messages = [];
+
+        foreach ($errors as $field => $message) {
+            $messages[] = [
+                'type' => 'error',
+                'code' => 'invalid_' . $field,
+                'message' => $message,
+                'severity' => self::SEVERITY_ERROR,
+            ];
+        }
+
+        return new WP_REST_Response([
+            'status' => self::STATUS_VALIDATION_ERROR,
+            'messages' => $messages,
+        ], 400);
+    }
+
+    /**
+     * Create an unauthorized error response.
+     */
+    public static function unauthorized(string $reason = 'Authentication required'): WP_REST_Response
+    {
+        return self::createError(
+            self::STATUS_UNAUTHORIZED,
+            'unauthorized',
+            $reason,
+            self::SEVERITY_ERROR,
+            401
+        );
+    }
+
+    /**
+     * Create a requires escalation error (needs human intervention).
+     */
+    public static function requiresEscalation(string $reason): WP_REST_Response
+    {
+        return self::createError(
+            self::STATUS_REQUIRES_ESCALATION,
+            'escalation_required',
+            $reason,
+            self::SEVERITY_WARNING,
+            400
+        );
+    }
+
+    /**
+     * Convert exception class name to error code.
+     */
+    private static function exceptionToCode(Exception $e): string
+    {
+        $className = (new \ReflectionClass($e))->getShortName();
+        $code = preg_replace('/Exception$/', '', $className);
+        $code = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $code));
+
+        return $code ?: 'unknown_error';
+    }
+}

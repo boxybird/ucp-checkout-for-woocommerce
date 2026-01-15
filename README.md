@@ -1,6 +1,12 @@
-# UCP Checkout for WooCommerce
+<p align="center">
+  <img src="https://ucp.dev/assets/updated-icon.svg" alt="UCP Logo" width="120" height="120">
+</p>
 
-Enable AI agents like ChatGPT, Gemini, and Claude to discover and purchase products from your WooCommerce store using the [Universal Commerce Protocol (UCP)](https://ucp.dev).
+<h1 align="center">UCP Checkout for WooCommerce</h1>
+
+<p align="center">
+  Enable AI agents like ChatGPT, Gemini, and Claude to discover and purchase products from your WooCommerce store using the <a href="https://ucp.dev">Universal Commerce Protocol (UCP)</a>.
+</p>
 
 ## What is UCP?
 

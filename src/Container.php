@@ -10,6 +10,10 @@ use UcpCheckout\Endpoints\CheckoutSessionCreateEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionGetEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionUpdateEndpoint;
 use UcpCheckout\Manifest\ManifestBuilder;
+use UcpCheckout\WooCommerce\Payment\GatewayResolver;
+use UcpCheckout\WooCommerce\Payment\PaymentHandlerFactory;
+use UcpCheckout\WooCommerce\Payment\PaymentHandlerRegistry;
+use UcpCheckout\WooCommerce\Payment\PaymentProcessor;
 use UcpCheckout\WooCommerce\PaymentGatewayAdapter;
 use UcpCheckout\WooCommerce\ShippingCalculator;
 use UcpCheckout\WooCommerce\TaxCalculator;
@@ -64,11 +68,29 @@ class Container
         // WooCommerce integration services
         $container->register(TaxCalculator::class, fn() => new TaxCalculator());
         $container->register(ShippingCalculator::class, fn() => new ShippingCalculator());
+
+        // Payment handler architecture
+        $container->register(PaymentHandlerRegistry::class, fn() => new PaymentHandlerRegistry());
+        $container->register(PaymentHandlerFactory::class, fn(Container $c) => new PaymentHandlerFactory(
+            $c->get(PaymentHandlerRegistry::class)
+        ));
+        $container->register(GatewayResolver::class, fn(Container $c) => new GatewayResolver(
+            $c->get(PaymentHandlerFactory::class)
+        ));
+        $container->register(PaymentProcessor::class, fn(Container $c) => new PaymentProcessor(
+            $c->get(GatewayResolver::class),
+            $c->get(PaymentHandlerFactory::class)
+        ));
+
+        // Legacy adapter (deprecated, kept for backwards compatibility)
         $container->register(PaymentGatewayAdapter::class, fn() => new PaymentGatewayAdapter());
+
         $container->register(WooCommerceService::class, fn(Container $c) => new WooCommerceService(
             $c->get(TaxCalculator::class),
             $c->get(ShippingCalculator::class),
-            $c->get(PaymentGatewayAdapter::class)
+            $c->get(PaymentGatewayAdapter::class),
+            $c->get(PaymentProcessor::class),
+            $c->get(PaymentHandlerRegistry::class)
         ));
 
         $container->register(ManifestBuilder::class, fn(Container $c) => new ManifestBuilder(

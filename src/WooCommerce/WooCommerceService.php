@@ -2,6 +2,12 @@
 
 namespace UcpCheckout\WooCommerce;
 
+use UcpCheckout\WooCommerce\Payment\Contracts\ManifestContributorInterface;
+use UcpCheckout\WooCommerce\Payment\GatewayResolver;
+use UcpCheckout\WooCommerce\Payment\ManifestPaymentHandlerBuilder;
+use UcpCheckout\WooCommerce\Payment\PaymentHandlerFactory;
+use UcpCheckout\WooCommerce\Payment\PaymentHandlerRegistry;
+use UcpCheckout\WooCommerce\Payment\PaymentProcessor;
 use WC_Order;
 use WC_Payment_Gateway;
 
@@ -9,13 +15,31 @@ use WC_Payment_Gateway;
  * Facade service for WooCommerce integration.
  * Coordinates payment processing, shipping, tax, and inventory management.
  */
-class WooCommerceService
+readonly class WooCommerceService
 {
+    private PaymentProcessor $paymentProcessor;
+    private ManifestPaymentHandlerBuilder $manifestBuilder;
+
     public function __construct(
-        private readonly TaxCalculator $taxCalculator = new TaxCalculator(),
-        private readonly ShippingCalculator $shippingCalculator = new ShippingCalculator(),
-        private readonly PaymentGatewayAdapter $paymentAdapter = new PaymentGatewayAdapter()
+        private TaxCalculator         $taxCalculator = new TaxCalculator(),
+        private ShippingCalculator    $shippingCalculator = new ShippingCalculator(),
+        /** @deprecated Use PaymentProcessor instead */
+        private PaymentGatewayAdapter $paymentAdapter = new PaymentGatewayAdapter(),
+        ?PaymentProcessor             $paymentProcessor = null,
+        ?PaymentHandlerRegistry       $handlerRegistry = null
     ) {
+        // Create PaymentProcessor if not provided (backwards compatibility)
+        $registry = $handlerRegistry ?? new PaymentHandlerRegistry();
+        $factory = new PaymentHandlerFactory($registry);
+        $resolver = new GatewayResolver($factory);
+
+        if ($paymentProcessor === null) {
+            $this->paymentProcessor = new PaymentProcessor($resolver, $factory);
+        } else {
+            $this->paymentProcessor = $paymentProcessor;
+        }
+
+        $this->manifestBuilder = new ManifestPaymentHandlerBuilder($registry, $factory, $resolver);
     }
 
     /**
@@ -25,24 +49,23 @@ class WooCommerceService
      */
     public function getAvailablePaymentGateways(): array
     {
-        if (!function_exists('WC')) {
-            return [];
-        }
-
-        $paymentGateways = WC()->payment_gateways();
-        if (!$paymentGateways) {
-            return [];
-        }
-
-        $gateways = $paymentGateways->get_available_payment_gateways();
+        $gateways = $this->paymentProcessor->getGatewayResolver()->getAvailableGateways();
+        $handlerFactory = $this->paymentProcessor->getHandlerFactory();
         $available = [];
 
         foreach ($gateways as $gateway) {
+            $handler = $handlerFactory->getHandler($gateway);
+            $instrumentTypes = ['card']; // default
+
+            if ($handler instanceof ManifestContributorInterface) {
+                $instrumentTypes = $handler->getInstrumentTypes($gateway);
+            }
+
             $available[$gateway->id] = [
                 'id' => $gateway->id,
                 'name' => $gateway->get_title(),
                 'description' => $gateway->get_description(),
-                'instrument_types' => $this->paymentAdapter->getInstrumentTypes($gateway),
+                'instrument_types' => $instrumentTypes,
             ];
         }
 
@@ -58,7 +81,17 @@ class WooCommerceService
      */
     public function processPayment(WC_Order $order, array $paymentData): array
     {
-        return $this->paymentAdapter->processPayment($order, $paymentData);
+        return $this->paymentProcessor->processPayment($order, $paymentData);
+    }
+
+    /**
+     * Get the payment processor instance.
+     *
+     * @return PaymentProcessor
+     */
+    public function getPaymentProcessor(): PaymentProcessor
+    {
+        return $this->paymentProcessor;
     }
 
     /**
@@ -151,7 +184,7 @@ class WooCommerceService
      */
     public function mapPaymentHandler(string $handlerId): ?WC_Payment_Gateway
     {
-        return $this->paymentAdapter->mapToGateway($handlerId);
+        return $this->paymentProcessor->getGatewayResolver()->resolve($handlerId);
     }
 
     /**
@@ -161,6 +194,18 @@ class WooCommerceService
      */
     public function buildPaymentHandlersForManifest(): array
     {
-        return $this->paymentAdapter->buildManifestHandlers();
+        return $this->manifestBuilder->build();
+    }
+
+    /**
+     * Get the handler registry for direct access.
+     *
+     * @return PaymentHandlerRegistry
+     */
+    public function getHandlerRegistry(): PaymentHandlerRegistry
+    {
+        // Access registry through the processor's factory
+        // This is a bit indirect but maintains encapsulation
+        return $this->paymentProcessor->getHandlerFactory()->getRegistry();
     }
 }

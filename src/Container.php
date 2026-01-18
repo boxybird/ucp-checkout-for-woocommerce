@@ -2,6 +2,8 @@
 
 namespace UcpCheckout;
 
+use UcpCheckout\Admin\AdminMenu;
+use UcpCheckout\Admin\DebugDashboard;
 use UcpCheckout\Checkout\CheckoutSessionRepository;
 use UcpCheckout\Config\PluginConfig;
 use UcpCheckout\Endpoints\CheckoutSessionCancelEndpoint;
@@ -9,6 +11,9 @@ use UcpCheckout\Endpoints\CheckoutSessionCompleteEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionCreateEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionGetEndpoint;
 use UcpCheckout\Endpoints\CheckoutSessionUpdateEndpoint;
+use UcpCheckout\Http\RequestLoggingMiddleware;
+use UcpCheckout\Logging\LogRepository;
+use UcpCheckout\Logging\UcpRequestLogger;
 use UcpCheckout\Manifest\ManifestBuilder;
 use UcpCheckout\WooCommerce\Payment\GatewayResolver;
 use UcpCheckout\WooCommerce\Payment\PaymentHandlerFactory;
@@ -99,6 +104,24 @@ class Container
         ));
 
         $container->register(CheckoutSessionRepository::class, fn() => new CheckoutSessionRepository());
+
+        // Logging services
+        $container->register(LogRepository::class, fn() => new LogRepository());
+        $container->register(UcpRequestLogger::class, fn(Container $c) => new UcpRequestLogger(
+            $c->get(LogRepository::class)
+        ));
+        $container->register(RequestLoggingMiddleware::class, fn(Container $c) => new RequestLoggingMiddleware(
+            $c->get(UcpRequestLogger::class)
+        ));
+
+        // Admin services
+        $container->register(DebugDashboard::class, fn(Container $c) => new DebugDashboard(
+            $c->get(UcpRequestLogger::class),
+            $c->get(LogRepository::class)
+        ));
+        $container->register(AdminMenu::class, fn(Container $c) => new AdminMenu(
+            $c->get(DebugDashboard::class)
+        ));
 
         // Checkout Session Endpoints
         $container->register(CheckoutSessionCreateEndpoint::class, fn(Container $c) => new CheckoutSessionCreateEndpoint(

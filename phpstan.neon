@@ -6,6 +6,31 @@ parameters:
     scanDirectories:
         - vendor/php-stubs/wordpress-stubs
         - vendor/php-stubs/woocommerce-stubs
+    scanFiles:
+        - tests/Pest.php
     # Allow defensive null checks even when PHPDoc says values can't be null
     # WooCommerce runtime behavior may differ from stub annotations
     treatPhpDocTypesAsCertain: false
+    # Plugin constants defined in ucp-checkout.php
+    bootstrapFiles:
+        - phpstan-stubs.php
+    ignoreErrors:
+        # Pest framework uses dynamic method resolution for test() helper
+        - message: '#Call to an undefined method Pest\\PendingCalls\\TestCall\|Pest\\Support\\HigherOrderTapProxy::markTestSkipped\(\)#'
+          paths:
+            - tests/*
+        # Pest custom expectations are dynamically registered
+        - message: '#Call to an undefined method Pest\\Expectation<.*>::toBeValidationError\(\)#'
+          paths:
+            - tests/*
+        # Pest expect()->extend() uses $this binding which PHPStan doesn't understand
+        - message: '#Undefined variable: \$this#'
+          paths:
+            - tests/Pest.php
+        - message: '#Variable \$this in PHPDoc tag @var does not exist#'
+          paths:
+            - tests/Pest.php
+        # Test configuration constants - always true/false based on test setup
+        - message: '#Negated boolean expression is always false#'
+          paths:
+            - tests/*

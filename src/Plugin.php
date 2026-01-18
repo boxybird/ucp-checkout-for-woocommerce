@@ -2,7 +2,11 @@
 
 namespace UcpCheckout;
 
+use UcpCheckout\Admin\AdminMenu;
+use UcpCheckout\Admin\DebugDashboard;
 use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\Http\RequestLoggingMiddleware;
+use UcpCheckout\Logging\LogRepository;
 use UcpCheckout\Manifest\ManifestBuilder;
 
 class Plugin
@@ -27,9 +31,13 @@ class Plugin
         // Register REST API endpoints
         add_action('rest_api_init', $this->registerEndpoints(...));
 
-        // Register activation/deactivation hooks
-        register_activation_hook($this->getPluginFile(), $this->activate(...));
-        register_deactivation_hook($this->getPluginFile(), $this->deactivate(...));
+        // Register logging middleware
+        add_action('rest_api_init', $this->registerLoggingMiddleware(...));
+
+        // Register admin menu and dashboard
+        if (is_admin()) {
+            $this->registerAdmin();
+        }
     }
 
     /**
@@ -57,6 +65,27 @@ class Plugin
     }
 
     /**
+     * Register the request logging middleware.
+     */
+    public function registerLoggingMiddleware(): void
+    {
+        $middleware = $this->container->get(RequestLoggingMiddleware::class);
+        $middleware->register();
+    }
+
+    /**
+     * Register admin menu and dashboard.
+     */
+    private function registerAdmin(): void
+    {
+        $adminMenu = $this->container->get(AdminMenu::class);
+        $adminMenu->register();
+
+        $dashboard = $this->container->get(DebugDashboard::class);
+        $dashboard->registerAjaxHandlers();
+    }
+
+    /**
      * Plugin activation hook.
      */
     public function activate(): void
@@ -80,6 +109,10 @@ class Plugin
             ]);
         }
 
+        // Create the logs database table
+        $logRepository = $this->container->get(LogRepository::class);
+        $logRepository->createTable();
+
         // Flush rewrite rules for /.well-known/ucp
         flush_rewrite_rules();
     }
@@ -93,15 +126,11 @@ class Plugin
         $repository = $this->container->get(\UcpCheckout\Checkout\CheckoutSessionRepository::class);
         $repository->cleanupExpired();
 
-        flush_rewrite_rules();
-    }
+        // Unregister the logging middleware (clears cron job)
+        $middleware = $this->container->get(RequestLoggingMiddleware::class);
+        $middleware->unregister();
 
-    /**
-     * Get the main plugin file path.
-     */
-    private function getPluginFile(): string
-    {
-        return dirname(__DIR__) . '/ucp-checkout.php';
+        flush_rewrite_rules();
     }
 
     /**

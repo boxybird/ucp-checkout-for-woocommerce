@@ -18,7 +18,7 @@ class UcpRequestLogger
     /**
      * Sensitive fields to redact from logged data.
      */
-    private const SENSITIVE_FIELDS = [
+    private const array SENSITIVE_FIELDS = [
         'token',
         'credential',
         'card_number',
@@ -30,11 +30,8 @@ class UcpRequestLogger
         'private_key',
     ];
 
-    private LogRepository $repository;
-
-    public function __construct(LogRepository $repository)
+    public function __construct(private readonly LogRepository $repository)
     {
-        $this->repository = $repository;
     }
 
     /**
@@ -296,8 +293,8 @@ class UcpRequestLogger
             if (!empty($_SERVER[$header])) {
                 $ip = $_SERVER[$header];
                 // Handle comma-separated list (X-Forwarded-For)
-                if (str_contains($ip, ',')) {
-                    $ip = trim(explode(',', $ip)[0]);
+                if (str_contains((string) $ip, ',')) {
+                    $ip = trim(explode(',', (string) $ip)[0]);
                 }
                 if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     return $ip;
@@ -317,7 +314,7 @@ class UcpRequestLogger
         $sanitized = [];
 
         foreach ($headers as $key => $value) {
-            $lowerKey = strtolower($key);
+            $lowerKey = strtolower((string) $key);
             if (in_array($lowerKey, $sensitiveHeaders, true)) {
                 $sanitized[$key] = '[REDACTED]';
             } else {
@@ -337,15 +334,7 @@ class UcpRequestLogger
 
         foreach ($data as $key => $value) {
             $lowerKey = strtolower((string) $key);
-
-            // Check if this is a sensitive field
-            $isSensitive = false;
-            foreach (self::SENSITIVE_FIELDS as $sensitiveField) {
-                if (str_contains($lowerKey, $sensitiveField)) {
-                    $isSensitive = true;
-                    break;
-                }
-            }
+            $isSensitive = array_any(self::SENSITIVE_FIELDS, fn($sensitiveField) => str_contains($lowerKey, (string) $sensitiveField));
 
             if ($isSensitive) {
                 $sanitized[$key] = '[REDACTED]';

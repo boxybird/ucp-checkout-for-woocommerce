@@ -135,7 +135,7 @@ class LogEntry
         bool $includeTrace = false,
     ): self {
         $data = [
-            'exception_type' => get_class($exception),
+            'exception_type' => $exception::class,
             'message' => $exception->getMessage(),
             'code' => $exception->getCode(),
             'file' => $exception->getFile(),

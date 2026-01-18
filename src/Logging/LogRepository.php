@@ -12,8 +12,8 @@ class LogRepository
     public const TABLE_NAME = 'ucp_logs';
     public const DEFAULT_RETENTION_DAYS = 7;
 
-    private \wpdb $wpdb;
-    private string $table;
+    private readonly \wpdb $wpdb;
+    private readonly string $table;
 
     public function __construct()
     {
@@ -137,7 +137,7 @@ class LogRepository
             ARRAY_A
         );
 
-        return array_map(fn(array $row) => LogEntry::fromRow($row), $rows);
+        return array_map(LogEntry::fromRow(...), $rows);
     }
 
     /**
@@ -153,7 +153,7 @@ class LogRepository
             ARRAY_A
         );
 
-        return array_map(fn(array $row) => LogEntry::fromRow($row), $rows);
+        return array_map(LogEntry::fromRow(...), $rows);
     }
 
     /**
@@ -220,7 +220,7 @@ class LogRepository
             ARRAY_A
         );
 
-        return array_map(fn(array $row) => LogEntry::fromRow($row), $rows);
+        return array_map(LogEntry::fromRow(...), $rows);
     }
 
     /**

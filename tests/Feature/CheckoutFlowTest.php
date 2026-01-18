@@ -116,7 +116,7 @@ describe('Checkout Session Creation', function (): void {
         $response = create_checkout_session();
 
         expect($response)->toHaveKey('expires_at');
-        expect(strtotime($response['expires_at']))->toBeGreaterThan(time());
+        expect(strtotime((string) $response['expires_at']))->toBeGreaterThan(time());
     });
 });
 

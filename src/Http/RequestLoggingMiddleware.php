@@ -15,9 +15,7 @@ use WP_REST_Server;
  */
 class RequestLoggingMiddleware
 {
-    private const UCP_NAMESPACE = 'ucp/v1';
-
-    private UcpRequestLogger $logger;
+    private const string UCP_NAMESPACE = 'ucp/v1';
 
     /**
      * Tracks request context for correlation.
@@ -26,9 +24,8 @@ class RequestLoggingMiddleware
      */
     private array $requestContext = [];
 
-    public function __construct(UcpRequestLogger $logger)
+    public function __construct(private readonly UcpRequestLogger $logger)
     {
-        $this->logger = $logger;
     }
 
     /**
@@ -37,13 +34,13 @@ class RequestLoggingMiddleware
     public function register(): void
     {
         // Hook before request processing
-        add_filter('rest_request_before_callbacks', [$this, 'beforeRequest'], 10, 3);
+        add_filter('rest_request_before_callbacks', $this->beforeRequest(...), 10, 3);
 
         // Hook after response is ready
-        add_filter('rest_post_dispatch', [$this, 'afterResponse'], 10, 3);
+        add_filter('rest_post_dispatch', $this->afterResponse(...), 10, 3);
 
         // Schedule cleanup cron
-        add_action('ucp_logs_cleanup', [$this, 'runCleanup']);
+        add_action('ucp_logs_cleanup', $this->runCleanup(...));
 
         if (!wp_next_scheduled('ucp_logs_cleanup')) {
             wp_schedule_event(time(), 'daily', 'ucp_logs_cleanup');
@@ -55,8 +52,8 @@ class RequestLoggingMiddleware
      */
     public function unregister(): void
     {
-        remove_filter('rest_request_before_callbacks', [$this, 'beforeRequest']);
-        remove_filter('rest_post_dispatch', [$this, 'afterResponse']);
+        remove_filter('rest_request_before_callbacks', $this->beforeRequest(...));
+        remove_filter('rest_post_dispatch', $this->afterResponse(...));
 
         $timestamp = wp_next_scheduled('ucp_logs_cleanup');
         if ($timestamp) {

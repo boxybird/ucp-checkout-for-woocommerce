@@ -12,11 +12,8 @@ class AdminMenu
     public const CAPABILITY = 'manage_woocommerce';
     public const MENU_SLUG = 'ucp-debug';
 
-    private DebugDashboard $dashboard;
-
-    public function __construct(DebugDashboard $dashboard)
+    public function __construct(private readonly DebugDashboard $dashboard)
     {
-        $this->dashboard = $dashboard;
     }
 
     /**
@@ -24,8 +21,8 @@ class AdminMenu
      */
     public function register(): void
     {
-        add_action('admin_menu', [$this, 'addMenuPages']);
-        add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('admin_menu', $this->addMenuPages(...));
+        add_action('admin_enqueue_scripts', $this->enqueueAssets(...));
     }
 
     /**
@@ -39,7 +36,7 @@ class AdminMenu
             'UCP Debug',
             self::CAPABILITY,
             self::MENU_SLUG,
-            [$this->dashboard, 'render']
+            $this->dashboard->render(...)
         );
     }
 

@@ -12,16 +12,11 @@ use UcpCheckout\Logging\UcpRequestLogger;
  */
 class DebugDashboard
 {
-    private const PER_PAGE = 50;
-    private const NONCE_ACTION = 'ucp_debug_dashboard';
+    private const int PER_PAGE = 50;
+    private const string NONCE_ACTION = 'ucp_debug_dashboard';
 
-    private UcpRequestLogger $logger;
-    private LogRepository $repository;
-
-    public function __construct(UcpRequestLogger $logger, LogRepository $repository)
+    public function __construct(private readonly UcpRequestLogger $logger, private readonly LogRepository $repository)
     {
-        $this->logger = $logger;
-        $this->repository = $repository;
     }
 
     /**
@@ -29,9 +24,9 @@ class DebugDashboard
      */
     public function registerAjaxHandlers(): void
     {
-        add_action('wp_ajax_ucp_toggle_debug', [$this, 'handleToggleDebug']);
-        add_action('wp_ajax_ucp_clear_logs', [$this, 'handleClearLogs']);
-        add_action('wp_ajax_ucp_export_logs', [$this, 'handleExportLogs']);
+        add_action('wp_ajax_ucp_toggle_debug', $this->handleToggleDebug(...));
+        add_action('wp_ajax_ucp_clear_logs', $this->handleClearLogs(...));
+        add_action('wp_ajax_ucp_export_logs', $this->handleExportLogs(...));
     }
 
     /**

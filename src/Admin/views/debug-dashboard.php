@@ -183,7 +183,7 @@ $baseUrl = admin_url('admin.php?page=' . \UcpCheckout\Admin\AdminMenu::MENU_SLUG
                             <td>
                                 <?php if ($log->sessionId): ?>
                                     <a href="<?php echo esc_url(add_query_arg('session_id', $log->sessionId, $baseUrl)); ?>" title="<?php echo esc_attr($log->sessionId); ?>">
-                                        <?php echo esc_html(substr($log->sessionId, 0, 8)); ?>...
+                                        <?php echo esc_html(substr((string) $log->sessionId, 0, 8)); ?>...
                                     </a>
                                 <?php else: ?>
                                     -
@@ -192,7 +192,7 @@ $baseUrl = admin_url('admin.php?page=' . \UcpCheckout\Admin\AdminMenu::MENU_SLUG
                             <td>
                                 <?php if ($log->agent): ?>
                                     <span title="<?php echo esc_attr($log->agent); ?>">
-                                        <?php echo esc_html(strlen($log->agent) > 20 ? substr($log->agent, 0, 20) . '...' : $log->agent); ?>
+                                        <?php echo esc_html(strlen((string) $log->agent) > 20 ? substr((string) $log->agent, 0, 20) . '...' : $log->agent); ?>
                                     </span>
                                 <?php else: ?>
                                     -

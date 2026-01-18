@@ -191,6 +191,6 @@ describe('Error Entry Details', function (): void {
         );
 
         expect($entry->data['trace'])->toBeString();
-        expect(strlen($entry->data['trace']))->toBeGreaterThan(0);
+        expect(strlen((string) $entry->data['trace']))->toBeGreaterThan(0);
     });
 });

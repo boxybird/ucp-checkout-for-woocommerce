@@ -441,3 +441,111 @@ describe('Line Item Updates', function (): void {
         expect($newSubtotal)->toBe($originalSubtotal * 3);
     });
 });
+
+// =============================================================================
+// STRIPE PAYMENT GATEWAY
+// =============================================================================
+
+describe('Stripe Payment Gateway', function (): void {
+    beforeEach(function (): void {
+        if (!UCP_TEST_STRIPE_ENABLED) {
+            $this->markTestSkipped('Stripe testing is disabled');
+        }
+    });
+
+    it('shows stripe in manifest payment handlers', function (): void {
+        $manifest = get_ucp_manifest();
+
+        $handlerIds = array_column($manifest['payment']['handlers'], 'id');
+        expect($handlerIds)->toContain('stripe');
+    });
+
+    it('completes checkout with Stripe test visa card', function (): void {
+        // Create session
+        $session = create_checkout_session();
+        $sessionId = $session['id'];
+
+        // Add shipping
+        add_shipping_to_session($sessionId);
+
+        // Complete with Stripe payment
+        $response = complete_checkout_session($sessionId, stripe_payment_data('visa'));
+
+        expect($response['status'])->toBe('completed');
+        expect($response['order'])->toHaveKey('id');
+        expect($response['order']['status'])->toBe('confirmed');
+    });
+
+    it('completes checkout with Stripe test mastercard', function (): void {
+        $session = create_checkout_session();
+        $sessionId = $session['id'];
+
+        add_shipping_to_session($sessionId);
+        $response = complete_checkout_session($sessionId, stripe_payment_data('mastercard'));
+
+        expect($response['status'])->toBe('completed');
+    });
+
+    it('completes checkout with Stripe test amex', function (): void {
+        $session = create_checkout_session();
+        $sessionId = $session['id'];
+
+        add_shipping_to_session($sessionId);
+        $response = complete_checkout_session($sessionId, stripe_payment_data('amex'));
+
+        expect($response['status'])->toBe('completed');
+    });
+
+    it('handles declined card gracefully', function (): void {
+        $session = create_checkout_session();
+        $sessionId = $session['id'];
+
+        add_shipping_to_session($sessionId);
+        $response = complete_checkout_session($sessionId, stripe_payment_data('declined'));
+
+        // Should fail with an error, not crash
+        expect($response['status'])->toBeIn(['error', 'payment_failed']);
+        expect($response)->toHaveKey('messages');
+    });
+
+    it('handles insufficient funds gracefully', function (): void {
+        $session = create_checkout_session();
+        $sessionId = $session['id'];
+
+        add_shipping_to_session($sessionId);
+        $response = complete_checkout_session($sessionId, stripe_payment_data('insufficient_funds'));
+
+        expect($response['status'])->toBeIn(['error', 'payment_failed']);
+        expect($response)->toHaveKey('messages');
+    });
+
+    it('completes full checkout flow with Stripe', function (): void {
+        // Step 1: Create session
+        $session = create_checkout_session(quantity: 2);
+        expect($session['status'])->toBe('incomplete');
+        $sessionId = $session['id'];
+
+        // Step 2: Add shipping address
+        $withAddress = add_shipping_to_session($sessionId);
+        expect($withAddress['fulfillment']['options'])->not->toBeEmpty();
+
+        // Step 3: Select shipping method if multiple available
+        if (count($withAddress['fulfillment']['options']) > 1) {
+            $selectedMethod = $withAddress['fulfillment']['options'][1]['id'];
+            ucp_api("/checkout-sessions/{$sessionId}", 'PUT', [
+                'fulfillment' => ['shipping_method' => $selectedMethod],
+            ]);
+        }
+
+        // Step 4: Complete checkout with Stripe
+        $completed = complete_checkout_session($sessionId, stripe_payment_data('visa'));
+
+        expect($completed['status'])->toBe('completed');
+        expect($completed['order']['id'])->toBeString();
+        expect($completed['order']['status'])->toBe('confirmed');
+
+        // Step 5: Verify session is no longer modifiable
+        $retryComplete = complete_checkout_session($sessionId, stripe_payment_data('visa'));
+        expect($retryComplete['status'])->toBe('invalid_session_status');
+    });
+});

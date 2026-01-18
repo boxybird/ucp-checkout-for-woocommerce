@@ -239,14 +239,20 @@ function get_ucp_manifest(): array
 |--------------------------------------------------------------------------
 */
 
-expect()->extend('toBeUcpSession', fn(): Pest\Expectation => $this
-    ->toHaveKey('id')
-    ->toHaveKey('status')
-    ->toHaveKey('line_items')
-    ->toHaveKey('currency')
-    ->toHaveKey('totals'));
+expect()->extend('toBeUcpSession', /** @return Pest\Expectation<mixed> */ function (): Pest\Expectation {
+    /** @var Pest\Expectation<mixed> $this */
+    return $this
+        ->toHaveKey('id')
+        ->toHaveKey('status')
+        ->toHaveKey('line_items')
+        ->toHaveKey('currency')
+        ->toHaveKey('totals');
+});
 
-expect()->extend('toBeValidationError', fn(): Pest\Expectation => $this
-    ->toHaveKey('status')
-    ->and($this->value['status'])->toBe('validation_error')
-    ->and($this->value)->toHaveKey('messages'));
+expect()->extend('toBeValidationError', /** @return Pest\Expectation<mixed> */ function (): Pest\Expectation {
+    /** @var Pest\Expectation<mixed> $this */
+    return $this
+        ->toHaveKey('status')
+        ->and($this->value['status'])->toBe('validation_error')
+        ->and($this->value)->toHaveKey('messages');
+});

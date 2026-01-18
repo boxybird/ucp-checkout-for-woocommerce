@@ -23,6 +23,10 @@ const UCP_TEST_BASE_URL = 'https://ucp-plugin.test';
 const UCP_TEST_PRODUCT_ID = '36';
 const UCP_TEST_PAYMENT_HANDLER = 'cheque';
 
+// Stripe test configuration
+const UCP_TEST_STRIPE_ENABLED = true;
+const UCP_TEST_STRIPE_HANDLER = 'stripe';
+
 /*
 |--------------------------------------------------------------------------
 | HTTP Client
@@ -135,6 +139,35 @@ function test_payment_data(?string $handlerId = null, array $credential = ['toke
     return [
         'handler_id' => $handlerId ?? UCP_TEST_PAYMENT_HANDLER,
         'credential' => $credential,
+    ];
+}
+
+/**
+ * Get Stripe test payment data with a test PaymentMethod.
+ *
+ * Uses Stripe's special test PaymentMethod tokens that work in test mode.
+ *
+ * @param string $testCard Test card type: 'visa', 'mastercard', 'amex', 'declined', '3ds'
+ * @return array UCP-format payment data for Stripe
+ */
+function stripe_payment_data(string $testCard = 'visa'): array
+{
+    // Stripe test PaymentMethod tokens
+    // See: https://docs.stripe.com/testing#cards
+    $testPaymentMethods = [
+        'visa' => 'pm_card_visa',
+        'mastercard' => 'pm_card_mastercard',
+        'amex' => 'pm_card_amex',
+        'declined' => 'pm_card_visa_chargeDeclined',
+        'insufficient_funds' => 'pm_card_visa_chargeDeclinedInsufficientFunds',
+        '3ds' => 'pm_card_threeDSecure2Required',
+    ];
+
+    return [
+        'handler_id' => UCP_TEST_STRIPE_HANDLER,
+        'credential' => [
+            'token' => $testPaymentMethods[$testCard] ?? $testPaymentMethods['visa'],
+        ],
     ];
 }
 

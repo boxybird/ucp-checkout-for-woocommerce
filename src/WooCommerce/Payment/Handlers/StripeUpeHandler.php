@@ -204,13 +204,11 @@ class StripeUpeHandler implements PaymentHandlerInterface, ManifestContributorIn
             $_POST['wc-stripe-confirmation-token'] = $transformedCredential['confirmation_token'];
         }
 
-        // Legacy support - some versions still check these
-        if ($transformedCredential['is_payment_method']) {
-            $_POST['wc-stripe-payment-token'] = $transformedCredential['payment_method_id'];
-        }
+        // IMPORTANT: Do NOT set wc-stripe-payment-token here!
+        // Setting it triggers the "saved payment method" flow which expects a WC token ID,
+        // not a raw Stripe PaymentMethod ID. The modern UPE flow uses wc-stripe-payment-method instead.
 
-        // Don't set stripe_source for modern UPE - it causes issues
-        // Legacy source support only if explicitly a source
+        // Legacy source support only if explicitly a source (src_xxx)
         if ($transformedCredential['is_source']) {
             $_POST['stripe_source'] = $transformedCredential['payment_method_id'];
         }

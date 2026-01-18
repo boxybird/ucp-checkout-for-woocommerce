@@ -22,6 +22,22 @@ define('UCP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 // Load Composer autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Register activation/deactivation hooks (must be done at plugin load time, not in a hook)
+register_activation_hook(__FILE__, 'ucp_plugin_activate');
+register_deactivation_hook(__FILE__, 'ucp_plugin_deactivate');
+
+function ucp_plugin_activate(): void
+{
+    $plugin = new UcpCheckout\Plugin();
+    $plugin->activate();
+}
+
+function ucp_plugin_deactivate(): void
+{
+    $plugin = new UcpCheckout\Plugin();
+    $plugin->deactivate();
+}
+
 // Initialize the plugin
 function ucp_plugin_init(): void
 {

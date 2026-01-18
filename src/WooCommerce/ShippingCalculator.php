@@ -79,6 +79,9 @@ class ShippingCalculator
             return [];
         }
 
+        // Initialize WC session and customer if not set (required for REST API context)
+        WooCommerceContextInitializer::initialize($destination);
+
         // Build shipping package from line items
         $package = $this->buildShippingPackage($destination, $lineItems);
 

@@ -82,6 +82,9 @@ class PaymentGatewayAdapter
             ];
         }
 
+        // Initialize WC session, customer, and cart (required for REST API context)
+        WooCommerceContextInitializer::initialize();
+
         // Set the payment method on the order
         $order->set_payment_method($gateway->id);
         $order->set_payment_method_title($gateway->get_title());

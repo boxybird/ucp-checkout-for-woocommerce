@@ -20,7 +20,7 @@ class RequestLoggingMiddleware
     /**
      * Tracks request context for correlation.
      *
-     * @var array<string, array{request_id: string, start_time: float, endpoint: string, method: string, session_id: ?string}>
+     * @var array<int, array{request_id: string, start_time: float, endpoint: string, method: string, session_id: ?string}>
      */
     private array $requestContext = [];
 
@@ -64,10 +64,10 @@ class RequestLoggingMiddleware
     /**
      * Called before request callbacks are executed.
      *
-     * @param WP_REST_Response|null|WP_Error $response
+     * @param WP_REST_Response|null|\WP_Error $response
      * @param array $handler
      * @param WP_REST_Request $request
-     * @return WP_REST_Response|null|WP_Error
+     * @return WP_REST_Response|null|\WP_Error
      */
     public function beforeRequest($response, array $handler, WP_REST_Request $request)
     {

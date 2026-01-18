@@ -11,7 +11,6 @@ use UcpCheckout\WooCommerce\Payment\Contracts\ManifestContributorInterface;
 class ManifestPaymentHandlerBuilder
 {
     public function __construct(
-        private readonly PaymentHandlerRegistry $registry,
         private readonly PaymentHandlerFactory $factory,
         private readonly GatewayResolver $resolver
     ) {

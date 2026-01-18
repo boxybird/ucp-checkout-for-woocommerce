@@ -2,6 +2,7 @@
 /**
  * UCP Debug Dashboard view template.
  *
+ * @var \UcpCheckout\Admin\DebugDashboard $this
  * @var bool $debugMode
  * @var array $stats
  * @var array $filters
@@ -257,7 +258,7 @@ $baseUrl = admin_url('admin.php?page=' . \UcpCheckout\Admin\AdminMenu::MENU_SLUG
             <label for="retention_days">Retention:</label>
             <select name="retention_days" id="retention_days">
                 <?php
-                $currentRetention = $this->logger->getRetentionDays();
+                $currentRetention = $this->getLogger()->getRetentionDays();
                 foreach ([1, 3, 7, 14, 30, 60, 90] as $days):
                 ?>
                     <option value="<?php echo $days; ?>" <?php selected($currentRetention, $days); ?>>

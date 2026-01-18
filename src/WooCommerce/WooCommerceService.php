@@ -21,12 +21,10 @@ readonly class WooCommerceService
     private ManifestPaymentHandlerBuilder $manifestBuilder;
 
     public function __construct(
-        private TaxCalculator         $taxCalculator = new TaxCalculator(),
-        private ShippingCalculator    $shippingCalculator = new ShippingCalculator(),
-        /** @deprecated Use PaymentProcessor instead */
-        private PaymentGatewayAdapter $paymentAdapter = new PaymentGatewayAdapter(),
-        ?PaymentProcessor             $paymentProcessor = null,
-        ?PaymentHandlerRegistry       $handlerRegistry = null
+        private TaxCalculator       $taxCalculator = new TaxCalculator(),
+        private ShippingCalculator  $shippingCalculator = new ShippingCalculator(),
+        ?PaymentProcessor           $paymentProcessor = null,
+        ?PaymentHandlerRegistry     $handlerRegistry = null
     ) {
         // Create PaymentProcessor if not provided (backwards compatibility)
         $registry = $handlerRegistry ?? new PaymentHandlerRegistry();
@@ -39,7 +37,7 @@ readonly class WooCommerceService
             $this->paymentProcessor = $paymentProcessor;
         }
 
-        $this->manifestBuilder = new ManifestPaymentHandlerBuilder($registry, $factory, $resolver);
+        $this->manifestBuilder = new ManifestPaymentHandlerBuilder($factory, $resolver);
     }
 
     /**

@@ -92,7 +92,7 @@ class Plugin
     {
         // Ensure WooCommerce is active
         if (!class_exists('WooCommerce')) {
-            deactivate_plugins(plugin_basename($this->getPluginFile()));
+            deactivate_plugins(plugin_basename(UCP_PLUGIN_FILE));
             wp_die(
                 'UCP Checkout for WooCommerce requires WooCommerce to be installed and active.',
                 'Plugin Activation Error',

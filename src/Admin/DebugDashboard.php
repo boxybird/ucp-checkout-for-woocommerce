@@ -20,6 +20,14 @@ class DebugDashboard
     }
 
     /**
+     * Get the logger instance.
+     */
+    public function getLogger(): UcpRequestLogger
+    {
+        return $this->logger;
+    }
+
+    /**
      * Register AJAX handlers.
      */
     public function registerAjaxHandlers(): void

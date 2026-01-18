@@ -19,7 +19,6 @@ use UcpCheckout\WooCommerce\Payment\GatewayResolver;
 use UcpCheckout\WooCommerce\Payment\PaymentHandlerFactory;
 use UcpCheckout\WooCommerce\Payment\PaymentHandlerRegistry;
 use UcpCheckout\WooCommerce\Payment\PaymentProcessor;
-use UcpCheckout\WooCommerce\PaymentGatewayAdapter;
 use UcpCheckout\WooCommerce\ShippingCalculator;
 use UcpCheckout\WooCommerce\TaxCalculator;
 use UcpCheckout\WooCommerce\WooCommerceService;
@@ -87,13 +86,9 @@ class Container
             $c->get(PaymentHandlerFactory::class)
         ));
 
-        // Legacy adapter (deprecated, kept for backwards compatibility)
-        $container->register(PaymentGatewayAdapter::class, fn() => new PaymentGatewayAdapter());
-
         $container->register(WooCommerceService::class, fn(Container $c) => new WooCommerceService(
             $c->get(TaxCalculator::class),
             $c->get(ShippingCalculator::class),
-            $c->get(PaymentGatewayAdapter::class),
             $c->get(PaymentProcessor::class),
             $c->get(PaymentHandlerRegistry::class)
         ));

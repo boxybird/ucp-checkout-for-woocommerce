@@ -1,0 +1,14 @@
+/.git
+/.github
+/tests
+/node_modules
+.distignore
+.gitignore
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpstan.neon
+phpunit.xml
+rector.php
+CLAUDE.md

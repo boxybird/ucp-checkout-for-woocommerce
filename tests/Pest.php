@@ -256,3 +256,57 @@ expect()->extend('toBeValidationError', /** @return Pest\Expectation<mixed> */ f
         ->and($this->value['status'])->toBe('validation_error')
         ->and($this->value)->toHaveKey('messages');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Product Configuration Test Helpers
+|--------------------------------------------------------------------------
+*/
+
+use UcpCheckout\ProductConfiguration\ProductConfigurationDetectorInterface;
+
+/**
+ * Create a mock detector for testing ProductConfigurationChecker.
+ *
+ * @param bool $isApplicable Whether the detector's plugin is active
+ * @param bool $requiresConfiguration Whether the product requires configuration
+ * @param string $pluginName The plugin name to return
+ * @param string $reason The reason message to return
+ * @return ProductConfigurationDetectorInterface
+ */
+function createMockDetector(
+    bool $isApplicable,
+    bool $requiresConfiguration,
+    string $pluginName = 'Mock Plugin',
+    string $reason = 'Mock reason'
+): ProductConfigurationDetectorInterface {
+    return new readonly class ($isApplicable, $requiresConfiguration, $pluginName, $reason) implements ProductConfigurationDetectorInterface {
+        public function __construct(
+            private bool $isApplicable,
+            private bool $requiresConfiguration,
+            private string $pluginName,
+            private string $reason
+        ) {
+        }
+
+        public function isApplicable(): bool
+        {
+            return $this->isApplicable;
+        }
+
+        public function requiresConfiguration(\WC_Product $product): bool
+        {
+            return $this->requiresConfiguration;
+        }
+
+        public function getRequirementReason(\WC_Product $product): string
+        {
+            return $this->reason;
+        }
+
+        public function getPluginName(): string
+        {
+            return $this->pluginName;
+        }
+    };
+}

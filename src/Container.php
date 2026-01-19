@@ -15,6 +15,11 @@ use UcpCheckout\Http\RequestLoggingMiddleware;
 use UcpCheckout\Logging\LogRepository;
 use UcpCheckout\Logging\UcpRequestLogger;
 use UcpCheckout\Manifest\ManifestBuilder;
+use UcpCheckout\ProductConfiguration\Detectors\CompositeProductsDetector;
+use UcpCheckout\ProductConfiguration\Detectors\ProductBundlesDetector;
+use UcpCheckout\ProductConfiguration\Detectors\WooCommerceProductAddOnsDetector;
+use UcpCheckout\ProductConfiguration\Detectors\YithProductAddOnsDetector;
+use UcpCheckout\ProductConfiguration\ProductConfigurationChecker;
 use UcpCheckout\WooCommerce\Payment\GatewayResolver;
 use UcpCheckout\WooCommerce\Payment\PaymentHandlerFactory;
 use UcpCheckout\WooCommerce\Payment\PaymentHandlerRegistry;
@@ -100,6 +105,14 @@ class Container
 
         $container->register(CheckoutSessionRepository::class, fn() => new CheckoutSessionRepository());
 
+        // Product configuration detection
+        $container->register(ProductConfigurationChecker::class, fn() => new ProductConfigurationChecker([
+            new WooCommerceProductAddOnsDetector(),
+            new YithProductAddOnsDetector(),
+            new CompositeProductsDetector(),
+            new ProductBundlesDetector(),
+        ]));
+
         // Logging services
         $container->register(LogRepository::class, fn() => new LogRepository());
         $container->register(UcpRequestLogger::class, fn(Container $c) => new UcpRequestLogger(
@@ -121,7 +134,8 @@ class Container
         // Checkout Session Endpoints
         $container->register(CheckoutSessionCreateEndpoint::class, fn(Container $c) => new CheckoutSessionCreateEndpoint(
             $c->get(PluginConfig::class),
-            $c->get(CheckoutSessionRepository::class)
+            $c->get(CheckoutSessionRepository::class),
+            $c->get(ProductConfigurationChecker::class)
         ));
 
         $container->register(CheckoutSessionGetEndpoint::class, fn(Container $c) => new CheckoutSessionGetEndpoint(
@@ -132,7 +146,8 @@ class Container
         $container->register(CheckoutSessionUpdateEndpoint::class, fn(Container $c) => new CheckoutSessionUpdateEndpoint(
             $c->get(PluginConfig::class),
             $c->get(CheckoutSessionRepository::class),
-            $c->get(WooCommerceService::class)
+            $c->get(WooCommerceService::class),
+            $c->get(ProductConfigurationChecker::class)
         ));
 
         $container->register(CheckoutSessionCompleteEndpoint::class, fn(Container $c) => new CheckoutSessionCompleteEndpoint(

@@ -1,14 +1,28 @@
+# Exclude from distribution ZIP
+# Keep in sync with .gitattributes
+
+# Directories
+/.claude
 /.git
 /.github
-/tests
+/assets
 /node_modules
+/tests
+
+# Files
 .distignore
+.DS_Store
+.gitattributes
 .gitignore
+.mcp.json
+CLAUDE.md
 composer.json
 composer.lock
+E2E_TESTING_PLAN.md
 package.json
 package-lock.json
+phpstan-stubs.php
 phpstan.neon
 phpunit.xml
+README.md
 rector.php
-CLAUDE.md

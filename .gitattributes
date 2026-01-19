@@ -1,12 +1,21 @@
-# Distribution excludes
+# Exclude from GitHub ZIP downloads (export-ignore)
+# Keep in sync with .distignore
+
 /.claude/           export-ignore
-/.gitattributes     export-ignore
-/.gitignore         export-ignore
-/CLAUDE.md          export-ignore
-/composer.json      export-ignore
-/composer.lock      export-ignore
-/phpstan.neon       export-ignore
-/phpunit.xml        export-ignore
-/rector.php         export-ignore
+/.git/              export-ignore
+/.github/           export-ignore
+/node_modules/      export-ignore
 /tests/             export-ignore
+
+.distignore         export-ignore
 .DS_Store           export-ignore
+.gitattributes      export-ignore
+.gitignore          export-ignore
+CLAUDE.md           export-ignore
+composer.json       export-ignore
+composer.lock       export-ignore
+package.json        export-ignore
+package-lock.json   export-ignore
+phpstan.neon        export-ignore
+phpunit.xml         export-ignore
+rector.php          export-ignore

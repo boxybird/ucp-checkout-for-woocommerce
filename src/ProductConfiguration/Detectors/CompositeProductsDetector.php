@@ -28,30 +28,18 @@ class CompositeProductsDetector implements ProductConfigurationDetectorInterface
             include_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        foreach (self::PLUGIN_FILES as $pluginFile) {
-            if (is_plugin_active($pluginFile)) {
-                return true;
-            }
+        if (array_any(self::PLUGIN_FILES, fn($pluginFile) => is_plugin_active($pluginFile))) {
+            return true;
         }
 
-        // Also check for the composite product class as a fallback
         return class_exists('WC_Product_Composite');
     }
 
     public function requiresConfiguration(\WC_Product $product): bool
     {
-        // Composite products are a specific product type
-        if ($product->get_type() === 'composite') {
-            return true;
-        }
-
-        // Also check if it's an instance of the composite product class
-        // @phpstan-ignore class.notFound (WC_Product_Composite is from optional premium plugin)
-        if ($product instanceof \WC_Product_Composite) {
-            return true;
-        }
-
-        return false;
+        // Composite products are identified by their product type
+        // All composite products require configuration (component selection)
+        return $product->get_type() === 'composite';
     }
 
     public function getRequirementReason(\WC_Product $product): string

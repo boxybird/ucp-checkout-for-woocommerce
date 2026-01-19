@@ -28,13 +28,10 @@ class ProductBundlesDetector implements ProductConfigurationDetectorInterface
             include_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        foreach (self::PLUGIN_FILES as $pluginFile) {
-            if (is_plugin_active($pluginFile)) {
-                return true;
-            }
+        if (array_any(self::PLUGIN_FILES, fn($pluginFile) => is_plugin_active($pluginFile))) {
+            return true;
         }
 
-        // Also check for the bundle product class as a fallback
         return class_exists('WC_Product_Bundle');
     }
 
@@ -72,44 +69,7 @@ class ProductBundlesDetector implements ProductConfigurationDetectorInterface
      */
     private function hasConfigurableItems(\WC_Product $product): bool
     {
-        // If the product is a WC_Product_Bundle instance, use its methods
-        // @phpstan-ignore class.notFound (WC_Product_Bundle is from optional premium plugin)
-        if ($product instanceof \WC_Product_Bundle && method_exists($product, 'get_bundled_items')) {
-            /** @phpstan-ignore class.notFound */
-            $bundledItems = $product->get_bundled_items();
-
-            if (empty($bundledItems)) {
-                return false;
-            }
-
-            foreach ($bundledItems as $bundledItem) {
-                // Check for optional items
-                if (method_exists($bundledItem, 'is_optional') && $bundledItem->is_optional()) {
-                    return true;
-                }
-
-                // Check for variable quantity
-                if (method_exists($bundledItem, 'get_quantity_min') && method_exists($bundledItem, 'get_quantity_max')) {
-                    $minQty = $bundledItem->get_quantity_min();
-                    $maxQty = $bundledItem->get_quantity_max();
-                    if ($minQty !== $maxQty) {
-                        return true;
-                    }
-                }
-
-                // Check for variable products in bundle
-                if (method_exists($bundledItem, 'get_product') && $bundledItem->get_product()) {
-                    $bundledProduct = $bundledItem->get_product();
-                    if ($bundledProduct->is_type('variable')) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        // Fallback: Read bundle items from meta
+        // Read bundle items from post meta (defensive approach - no instanceof checks)
         $bundledItemsData = get_post_meta($product->get_id(), '_bundle_data', true);
 
         if (!is_array($bundledItemsData) || empty($bundledItemsData)) {

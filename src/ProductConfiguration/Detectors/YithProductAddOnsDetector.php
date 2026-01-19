@@ -30,13 +30,10 @@ class YithProductAddOnsDetector implements ProductConfigurationDetectorInterface
             include_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        foreach (self::PLUGIN_FILES as $pluginFile) {
-            if (is_plugin_active($pluginFile)) {
-                return true;
-            }
+        if (array_any(self::PLUGIN_FILES, fn($pluginFile) => is_plugin_active($pluginFile))) {
+            return true;
         }
 
-        // Also check for YITH class existence as a fallback
         return class_exists('YITH_WAPO') || class_exists('YITH_WAPO_Premium');
     }
 

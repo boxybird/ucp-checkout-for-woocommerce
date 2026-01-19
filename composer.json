@@ -2,6 +2,19 @@
     "name": "your-vendor/ucp-checkout-for-woocommerce",
     "description": "UCP Checkout for WooCommerce - Enable AI agents to purchase from your store via UCP",
     "type": "wordpress-plugin",
+    "keywords": [
+        "wordpress",
+        "woocommerce",
+        "ucp",
+        "universal-commerce-protocol",
+        "ai-commerce",
+        "ai-agents",
+        "checkout",
+        "ecommerce",
+        "chatgpt",
+        "claude",
+        "gemini"
+    ],
     "license": "GPL-2.0-or-later",
     "autoload": {
         "psr-4": {

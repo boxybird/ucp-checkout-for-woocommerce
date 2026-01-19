@@ -5,6 +5,7 @@ namespace UcpCheckout\Endpoints;
 use UcpCheckout\Checkout\CheckoutSession;
 use UcpCheckout\Checkout\CheckoutSessionRepository;
 use UcpCheckout\Config\PluginConfig;
+use UcpCheckout\ProductConfiguration\ProductConfigurationChecker;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -12,7 +13,8 @@ class CheckoutSessionCreateEndpoint extends AbstractEndpoint
 {
     public function __construct(
         ?PluginConfig $config = null,
-        private readonly ?CheckoutSessionRepository $repository = new CheckoutSessionRepository()
+        private readonly ?CheckoutSessionRepository $repository = new CheckoutSessionRepository(),
+        private readonly ?ProductConfigurationChecker $configurationChecker = new ProductConfigurationChecker()
     ) {
         parent::__construct($config);
     }
@@ -89,6 +91,17 @@ class CheckoutSessionCreateEndpoint extends AbstractEndpoint
 
             if (!$product->is_in_stock()) {
                 $errors["line_items.{$index}.item.id"] = "Product out of stock: {$itemId}";
+            }
+
+            // Check if product requires configuration (add-ons, composites, bundles)
+            $configResult = $this->configurationChecker->check($product);
+            if ($configResult !== null) {
+                $errors["line_items.{$index}.item.id"] = sprintf(
+                    "Product '%s' requires configuration (%s) and cannot be purchased via UCP. %s",
+                    $product->get_name(),
+                    $configResult['plugin'],
+                    $configResult['reason']
+                );
             }
 
             $quantity = $lineItem['quantity'] ?? 1;

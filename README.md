@@ -53,11 +53,15 @@ This plugin implements the **Checkout capability** (`dev.ucp.shopping.checkout`)
 
 ## Installation
 
-1. Upload the `ucp-checkout-for-woocommerce` folder to `/wp-content/plugins/`
-2. Activate the plugin through the WordPress admin
-3. Verify your manifest is accessible at `https://your-store.com/.well-known/ucp`
+### From GitHub
 
-That's it! Your store is now discoverable by UCP-compatible AI agents.
+1. Download the latest release or clone the repository
+2. Run `composer install --no-dev` to install dependencies
+3. Upload the `ucp-checkout-for-woocommerce` folder to `/wp-content/plugins/`
+4. Activate the plugin through the WordPress admin
+5. Verify your manifest is accessible at `https://your-store.com/.well-known/ucp`
+
+Your store is now discoverable by UCP-compatible AI agents.
 
 ---
 

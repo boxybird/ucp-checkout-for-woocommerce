@@ -16,8 +16,6 @@
 .gitignore             export-ignore
 .mcp.json              export-ignore
 CLAUDE.md              export-ignore
-composer.json          export-ignore
-composer.lock          export-ignore
 E2E_TESTING_PLAN.md    export-ignore
 package.json           export-ignore
 package-lock.json      export-ignore

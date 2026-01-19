@@ -1,5 +1,5 @@
 {
-    "name": "your-vendor/ucp-checkout-for-woocommerce",
+    "name": "boxybird/ucp-checkout-for-woocommerce",
     "description": "UCP Checkout for WooCommerce - Enable AI agents to purchase from your store via UCP",
     "type": "wordpress-plugin",
     "keywords": [

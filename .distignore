@@ -1,9 +1,17 @@
+# Exclude from distribution ZIP
+# Keep in sync with .gitattributes
+
+/.claude
 /.git
 /.github
-/tests
 /node_modules
+/tests
+
 .distignore
+.DS_Store
+.gitattributes
 .gitignore
+CLAUDE.md
 composer.json
 composer.lock
 package.json
@@ -11,4 +19,3 @@ package-lock.json
 phpstan.neon
 phpunit.xml
 rector.php
-CLAUDE.md

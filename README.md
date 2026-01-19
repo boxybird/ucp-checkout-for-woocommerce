@@ -126,6 +126,41 @@ The plugin automatically detects and integrates with your active WooCommerce pay
 
 Developers can register custom payment handlers via the `ucp_payment_handlers` filter. See the [Developer Guide](#extending-payment-handlers) below.
 
+## Product Compatibility
+
+Some WooCommerce products require user configuration (selecting options, add-ons, bundle items) that AI agents cannot perform. The plugin automatically detects these products and returns an error when they're added to a checkout session, directing the buyer to complete the purchase on the product page instead.
+
+### Detected Plugins
+
+| Plugin | Detection Logic |
+|--------|-----------------|
+| **WooCommerce Composite Products** | All composite products excluded (require component selection) |
+| **WooCommerce Product Bundles** | Bundles with optional items, variable quantities, or variable products |
+| **WooCommerce Product Add-Ons** | Products with required add-on fields |
+| **YITH WooCommerce Product Add-Ons** | Products with required add-on options |
+
+### How It Works
+
+When a product with required configuration is added to a checkout session, the API returns a validation error:
+
+```json
+{
+  "status": "validation_error",
+  "messages": [
+    {
+      "type": "error",
+      "code": "invalid_line_items.0.item.id",
+      "message": "Product 'Custom Bundle' requires configuration (WooCommerce Product Bundles) and cannot be purchased via UCP. This product bundle requires selecting item options on the product page.",
+      "severity": "recoverable"
+    }
+  ]
+}
+```
+
+The AI agent should inform the buyer that this product requires manual configuration on the store's website.
+
+---
+
 ## Troubleshooting
 
 ### Manifest Not Loading

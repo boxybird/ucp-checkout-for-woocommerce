@@ -27,6 +27,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     ├── Checkout/
     │   ├── CheckoutSession.php           # Session model
     │   └── CheckoutSessionRepository.php # Session storage (transients)
+    ├── ProductConfiguration/
+    │   ├── ProductConfigurationChecker.php          # Aggregates detectors
+    │   ├── ProductConfigurationDetectorInterface.php # Detector contract
+    │   └── Detectors/                               # Plugin-specific detectors
+    │       ├── CompositeProductsDetector.php
+    │       ├── ProductBundlesDetector.php
+    │       ├── WooCommerceProductAddOnsDetector.php
+    │       └── YithProductAddOnsDetector.php
     └── Endpoints/
         ├── AbstractEndpoint.php               # Base class for all endpoints
         ├── CheckoutSessionCreateEndpoint.php  # POST /checkout-sessions
@@ -46,6 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **`Container`** - Simple DI container, bootstraps all services
 **`PluginConfig`** - Singleton with UCP_VERSION, capabilities, services config
 **`AbstractEndpoint`** - Base class providing validation, auth, response helpers
+**`ProductConfigurationChecker`** - Detects products requiring configuration that AI agents can't handle
 
 ### Adding New Endpoints
 

@@ -1,2 +1,5 @@
 tests/.DS_Store
 .DS_Store
+
+# Composer dependencies (install with: composer install)
+/vendor/
